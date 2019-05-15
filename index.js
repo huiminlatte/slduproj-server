@@ -34,26 +34,11 @@ const storage = multer.diskStorage({
      cb(null, file.fieldname + "-" + Date.now() + "-" + file.originalname)
   }
 });
- 
 const upload = multer({storage: storage});
 
 app.get('/', (req, res)=>{
     res.send("Welcome to SLDU APP!");
     console.log(req.query);
-})
-app.get('/hello', function (req, res) {
-    res.send('GET request to the homepage')
-  })
-
-app.get('/uploadedfiles', (res,req)=>{
-    res.send("Get request");
-
-    var sql_show_uploaded_files = 'SHOW TABLES;';
-    connection.query(sql_show_uploaded_files, (err, response) =>{
-         //console.log(err || response);
-        response_uploaded_files = response;
-        console.log(response_uploaded_files);
-    })
 })
 
 // -> Express Upload RestAPIs
@@ -70,6 +55,83 @@ app.post('/api/uploadstudentmasterlist', upload.single("uploadfile"), (req, res)
           'msg': 'File uploaded/import successfully!', 'file': req.file
         });
 });
+
+//Function to connect to database and execute query
+var  executeQuery = function(query, res){             
+    //var request = new connection.Request();
+                        // query to the database
+    connection.query(query, function (err, response) {
+        if (err) {
+            console.log("Error while querying database :- " + err);
+            res.send(err);
+        }
+        else {
+            res.send(response);
+        }
+    });
+}
+
+
+// 1 - View all students in masterlist 
+app.get("/api/view_student_masterlist", function(req , res){
+    var query = "select * from student_masterlist";
+    executeQuery (query, res);
+});
+
+// 2 - Search students from masterlist 
+app.get("/api/students/", function(req , res){
+    var studentname = req.query.name;
+    var matricno = req.query.matricno;
+    if (matricno && studentname){
+        var query = "select * from student_masterlist where matricno LIKE '%" + matricno + "%' AND studentname LIKE '%" + studentname + "%'"; 
+    }
+    else if (studentname){
+        var query = "select * from student_masterlist where studentname LIKE '%" + studentname + "%'";
+    }
+    else if (matricno){
+        var query = "select * from student_masterlist where matricno LIKE '%" + matricno + "%'";
+    }
+    //console.log(studentname, matricno);
+    executeQuery (query, res);
+});
+
+app.get("/api/students/participation/", function(req , res){
+    var matricno = req.query.matricno;
+    var studentname = req.query.studentname;
+    
+    var eventlist = 'ESCENDO';
+
+    var query = "select * from " + eventlist + " where matricno='"+ matricno +"'";
+    
+    executeQuery (query, res);
+});
+
+
+
+
+
+
+
+app.get("/api/uploadedfiles", function(req , res){
+    var query = "SHOW TABLES;";
+    executeQuery (query, res);
+});
+
+app.get("/api/view_allevents", function(req , res){
+    var query = "SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME IN ('EVENTNAME') AND TABLE_SCHEMA='mydb'";
+    executeQuery (query, res);
+
+});
+
+// To Extract data from a certain event: localhost:8080/api/events/?eventname=escendo
+// Eventname must be exact (Use /api/view_events to provide a dropdown list for selecting events)
+app.get("/api/events/", function(req , res){
+    eventname = req.query.eventname;
+    var query = "SELECT * FROM " + eventname;
+    executeQuery (query, res);
+});
+
+
 
 
 // -> Import Event CSV File to MySQL database
