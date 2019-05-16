@@ -6,13 +6,13 @@ const multer = require('multer');
 const express = require('express');
  
 const app = express();
- 
+cors = require('cors') ,  app.use(cors());
 global.__basedir = __dirname;
 
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'password',
+    password: 'Prawira96',
     database: 'mydb'
 });
 
