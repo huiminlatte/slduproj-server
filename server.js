@@ -12,7 +12,7 @@ global.__basedir = __dirname;
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Prawira96',
+    password: 'password',
     database: 'mydb'
 });
 
