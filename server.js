@@ -62,11 +62,38 @@ var  executeQuery = function(query, res){
                         // query to the database
     connection.query(query, function (err, response) {
         if (err) {
-            console.log("Error while querying database :- " + err);
+            //return err
+            //console.log("Error while querying database :- " + err);
             res.send(err);
         }
         else {
+            
             res.send(response);
+        }
+    });
+}
+
+var  executeQueryShowTable = function(query, res){             
+    //var request = new connection.Request();
+                        // query to the database
+    connection.query(query, function (err, response) {
+        if (err) {
+            //return err
+            //console.log("Error while querying database :- " + err);
+            res.send(err);
+        }
+        else {
+            var apiResult = {};
+            apiResult = {
+                "dynamic" : "y", 
+                "columns" : Object.keys(response[0]), 
+                "data" : response
+            }
+            
+            //console.log("EXECUTEQUERY");
+            //return response;
+            //console.log(Object.keys(response[0]));
+            res.json(apiResult);
         }
     });
 }
@@ -103,7 +130,7 @@ app.get("/api/students/", function(req , res){
     
     
     console.log(query);
-    executeQuery (query, res);
+    executeQueryShowTable (query, res);
 });
 
 
@@ -116,7 +143,7 @@ app.get("/api/students/participation/", function(req , res){
     
     var query = "select * from " + eventlist + " where matricnumber='"+ matricnumber +"'";
     
-    executeQuery (query, res);
+    //// DO THIS
 });
 
 
@@ -128,10 +155,16 @@ app.get("/api/uploadedfiles", function(req , res){
     if (filename){
         var query="SELECT * FROM "+filename;
         executeQuery(query, res);
+        //errresponse = executeQuery(query, res);
+        //console.log("ERR RESPONSE")
+        //console.log(errresponse); 
     }
     else{
         var query = "SHOW TABLES;";
-        executeQuery (query, res);
+        executeQuery(query, res);
+        //setTimeout(errresponse = executeQuery(query, res));
+        //console.log("ERR RESPONSE")
+        //console.log(errresponse); 
     }
 });
 
@@ -140,11 +173,10 @@ app.get("/api/uploadedfiles", function(req , res){
 // Eventname must be exact (Use /api/view_events to provide a dropdown list for selecting events)
 app.get("/api/events", function(req , res){
     var eventname = req.query.eventname;
-    console.log("eventname: ", eventname);
+    //console.log("eventname: ", eventname);
     if (eventname){
         var query = "SELECT * FROM " + eventname;
-        executeQuery (query, res);
-        // calculate number of participants from frontend
+        executeQueryShowTable (query, res);
     }
     else{
         var query = "SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME IN ('EVENTNAME') AND TABLE_SCHEMA='mydb'"; 
@@ -153,6 +185,44 @@ app.get("/api/events", function(req , res){
     }
 });
 
+app.get("/api/eventparticipation", function(req , res){
+    var eventname = req.query.eventname;
+   
+    var query = "SELECT COUNT(*) FROM " + eventname; //Not unique Matric Number
+    executeQuery (query, res);
+});
+
+app.get("/api/numberofstudents", function(req , res){
+    var student_list = req.query.listname;
+   
+    var query = "SELECT COUNT(*) FROM " + student_list; //Not unique Matric Number
+    executeQuery (query, res);
+});
+
+app.put("/api/droptables", function(req , res){
+    var tablename = req.query.tablename;
+   
+    var query = "DROP TABLE " + tablename; //Not unique Matric Number
+    connection.query(query, function(err, result){
+        if (err) {
+            var apiResult = {}
+            apiResult = {
+                "success" : "no", 
+                "data" : er, 
+            }
+        }
+            
+        else {
+            var apiResult = {}
+
+            apiResult = {
+                "success" : "yes", 
+                "data" : tablename
+            }
+        }
+        res.json(apiResult);
+    })
+});
 
 // -> Import Event CSV File to MySQL database
 function importEventData2MySQL(filePath){
@@ -219,6 +289,7 @@ function importStudentData2MySQL(filePath){
         });
     stream.pipe(csvStream);
 }
+
 
 
 // Create a Server
