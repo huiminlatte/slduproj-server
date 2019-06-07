@@ -13,7 +13,7 @@ const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: 'password',
-    database: 'mydb'npm
+    database: 'mydb'
 });
 
 connection.connect((error) => {
@@ -208,7 +208,7 @@ app.put("/api/droptables", function(req , res){
             var apiResult = {}
             apiResult = {
                 "success" : "no", 
-                "data" : er, 
+                "data" : err, 
             }
         }
             
