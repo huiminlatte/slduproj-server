@@ -10,10 +10,17 @@ cors = require('cors'), app.use(cors());
 global.__basedir = __dirname;
 
 const connection = mysql.createConnection({
+<<<<<<< HEAD
   host: 'localhost',
   user: 'root',
   password: 'password',
   database: 'mydb'
+=======
+    host: 'localhost',
+    user: 'root',
+    password: '00000000',
+    database: 'mydb'
+>>>>>>> fece4520b7ba26a7a241c2f0c47c92b8c772a387
 });
 
 connection.connect((error) => {
@@ -60,6 +67,7 @@ app.post('/api/uploadstudentmasterlist', upload.single("uploadfile"), (req, res)
 });
 
 //Function to connect to database and execute query
+<<<<<<< HEAD
 var executeQuery = function (query, res) {
   //var request = new connection.Request();
   // query to the database
@@ -99,6 +107,47 @@ var executeQueryShowTable = function (query, res) {
       res.json(apiResult);
     }
   });
+=======
+var  executeQuery = function(query, res){             
+    //var request = new connection.Request();
+                        // query to the database
+    connection.query(query, function (err, response) {
+        if (err) {
+            //return err
+            //console.log("Error while querying database :- " + err);
+            res.send(err);
+        }
+        else {
+            
+            res.send(response);
+        }
+    });
+>>>>>>> fece4520b7ba26a7a241c2f0c47c92b8c772a387
+}
+
+var  executeQueryShowTable = function(query, res){             
+    //var request = new connection.Request();
+                        // query to the database
+    connection.query(query, function (err, response) {
+        if (err) {
+            //return err
+            //console.log("Error while querying database :- " + err);
+            res.send(err);
+        }
+        else {
+            var apiResult = {};
+            apiResult = {
+                "dynamic" : "y", 
+                "columns" : Object.keys(response[0]), 
+                "data" : response
+            }
+            
+            //console.log("EXECUTEQUERY");
+            //return response;
+            //console.log(Object.keys(response[0]));
+            res.json(apiResult);
+        }
+    });
 }
 
 // 2 - Search students from masterlist 
@@ -136,6 +185,7 @@ app.get("/api/students/", function (req, res) {
     else {
       query = query + " where ";
     }
+<<<<<<< HEAD
     query = query + "tier=" + tier;
   }
   if (sortname) {
@@ -150,6 +200,12 @@ app.get("/api/students/", function (req, res) {
 
   console.log(query);
   executeQueryShowTable(query, res);
+=======
+    
+    
+    console.log(query);
+    executeQueryShowTable (query, res);
+>>>>>>> fece4520b7ba26a7a241c2f0c47c92b8c772a387
 });
 
 
@@ -162,12 +218,20 @@ app.get("/api/students/participation/", function (req, res) {
 
   var query = "select * from " + eventlist + " where matricnumber='" + matricnumber + "'";
 
+<<<<<<< HEAD
   //// TODO: 
+=======
+    
+    var query = "select * from " + eventlist + " where matricnumber='"+ matricnumber +"'";
+    
+    //// DO THIS
+>>>>>>> fece4520b7ba26a7a241c2f0c47c92b8c772a387
 });
 
 
 
 // To view list of uploaded files : /api/uploadedfiles
+<<<<<<< HEAD
 // To view specific file contents : /api/uploadedfiles?filename=:filename
 // 
 app.get("/api/uploadedfiles", function (req, res) {
@@ -186,11 +250,31 @@ app.get("/api/uploadedfiles", function (req, res) {
     //console.log("ERR RESPONSE")
     //console.log(errresponse); 
   }
+=======
+// To view specific file contents : /api/uploadedfiles/?filename=:filename
+app.get("/api/uploadedfiles", function(req , res){
+    var filename = req.query.filename;
+    if (filename){
+        var query="SELECT * FROM "+filename;
+        executeQuery(query, res);
+        //errresponse = executeQuery(query, res);
+        //console.log("ERR RESPONSE")
+        //console.log(errresponse); 
+    }
+    else{
+        var query = "SHOW TABLES;";
+        executeQuery(query, res);
+        //setTimeout(errresponse = executeQuery(query, res));
+        //console.log("ERR RESPONSE")
+        //console.log(errresponse); 
+    }
+>>>>>>> fece4520b7ba26a7a241c2f0c47c92b8c772a387
 });
 
 // List of Events : 
 // To Extract data from a certain event: localhost:8080/api/events/?eventname=escendo
 // Eventname must be exact (Use /api/view_events to provide a dropdown list for selecting events)
+<<<<<<< HEAD
 // sortstudentname=1 
 // sortpositiontier=1
 app.get("/api/events", function (req, res) {
@@ -206,6 +290,14 @@ app.get("/api/events", function (req, res) {
       if (sortpositiontier) {
         query = query + ", EVENTPOSITIONTIER";
       }
+=======
+app.get("/api/events", function(req , res){
+    var eventname = req.query.eventname;
+    //console.log("eventname: ", eventname);
+    if (eventname){
+        var query = "SELECT * FROM " + eventname;
+        executeQueryShowTable (query, res);
+>>>>>>> fece4520b7ba26a7a241c2f0c47c92b8c772a387
     }
     else if (sortpositiontier) {
       query = query + " ORDER BY EVENTPOSITIONTIER";
@@ -228,6 +320,7 @@ app.get("/api/eventparticipation", function (req, res) {
   executeQuery(query, res);
 });
 
+<<<<<<< HEAD
 app.get("/api/numberofstudents", function (req, res) {
   var student_list = req.query.listname;
 
@@ -256,6 +349,45 @@ app.put("/api/droptables", function (req, res) {
     }
     res.json(apiResult);
   })
+=======
+app.get("/api/eventparticipation", function(req , res){
+    var eventname = req.query.eventname;
+   
+    var query = "SELECT COUNT(*) FROM " + eventname; //Not unique Matric Number
+    executeQuery (query, res);
+});
+
+app.get("/api/numberofstudents", function(req , res){
+    var student_list = req.query.listname;
+   
+    var query = "SELECT COUNT(*) FROM " + student_list; //Not unique Matric Number
+    executeQuery (query, res);
+});
+
+app.put("/api/droptables", function(req , res){
+    var tablename = req.query.tablename;
+   
+    var query = "DROP TABLE " + tablename; //Not unique Matric Number
+    connection.query(query, function(err, result){
+        if (err) {
+            var apiResult = {}
+            apiResult = {
+                "success" : "no", 
+                "data" : err, 
+            }
+        }
+            
+        else {
+            var apiResult = {}
+
+            apiResult = {
+                "success" : "yes", 
+                "data" : tablename
+            }
+        }
+        res.json(apiResult);
+    })
+>>>>>>> fece4520b7ba26a7a241c2f0c47c92b8c772a387
 });
 
 // -> Import Event CSV File to MySQL database
