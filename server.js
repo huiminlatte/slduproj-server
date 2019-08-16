@@ -19,8 +19,7 @@ const connection = mysql.createConnection({
 connection.connect((error) => {
   if (error) {
     console.error(error);
-  }
-  else {
+  } else {
     console.log("Connected to Database");
   }
 })
@@ -34,7 +33,9 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname + "-" + Date.now() + "-" + file.originalname)
   }
 });
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage
+});
 
 app.get('/', (req, res) => {
   res.send("Welcome to SLDU APP!");
@@ -42,12 +43,14 @@ app.get('/', (req, res) => {
 })
 
 // -> Express Upload RestAPIs
+// TODO: Upload successful 
 app.post('/api/uploadeventfile', upload.single("uploadfile"), (req, res) => {
   // checkiftableexists(req.fi);
 
   importEventData2MySQL(__basedir + '/uploads/' + req.file.filename, req.file.originalname);
   res.json({
-    'msg': 'File uploaded successfully!', 'file': req.file
+    'msg': 'File uploaded successfully!',
+    'file': req.file
   });
 
 });
@@ -55,7 +58,24 @@ app.post('/api/uploadeventfile', upload.single("uploadfile"), (req, res) => {
 app.post('/api/uploadstudentmasterlist', upload.single("uploadfile"), (req, res) => {
   importStudentData2MySQL(__basedir + '/uploads/' + req.file.filename);
   res.json({
-    'msg': 'File uploaded/import successfully!', 'file': req.file
+    'msg': 'File uploaded/import successfully!',
+    'file': req.file
+  });
+});
+
+app.post('/api/uploadattribute2skillset', upload.single("uploadfile"), (req, res) => {
+  importAttrSkillData2MySQL(__basedir + '/uploads/' + req.file.filename);
+  res.json({
+    'msg': 'File uploaded/import successfully!',
+    'file': req.file
+  });
+});
+
+app.post('/api/uploadevent2attribute', upload.single("uploadfile"), (req, res) => {
+  importEventAttriData2MySQL(__basedir + '/uploads/' + req.file.filename);
+  res.json({
+    'msg': 'File uploaded/import successfully!',
+    'file': req.file
   });
 });
 
@@ -68,8 +88,7 @@ var executeQuery = function (query, res) {
       //return err
       //console.log("Error while querying database :- " + err);
       res.send(err);
-    }
-    else {
+    } else {
 
       res.send(response);
     }
@@ -84,10 +103,10 @@ var executeQueryShowTable = function (query, res) {
       //return err
       //console.log("Error while querying database :- " + err);
       res.send(err);
-    }
-    else {
+    } else {
       var apiResult = {};
       apiResult = {
+        // TODO: "status": "found"
         "dynamic": "y",
         "columns": Object.keys(response[0]),
         "data": response
@@ -122,33 +141,28 @@ app.get("/api/students/", function (req, res) {
   if (studentname) {
     if (matricnumber) {
       query = query + " and ";
-    }
-    else {
+    } else {
       query = query + " where ";
     }
     query = query + "studentname LIKE '%" + studentname + "%'";
 
-  }
-  else if (tier) {
+  } else if (tier) {
     if (matricnumber || studentname) {
       query = query + " and ";
-    }
-    else {
+    } else {
       query = query + " where ";
     }
     query = query + "tier=" + tier;
   }
   if (sortname) {
     query = query + " ORDER BY STUDENTNAME";
-  }
-  else if (sortmatricnumber) {
+  } else if (sortmatricnumber) {
     query = query + " ORDER BY MATRICNUMBER";
-  }
-  else if (sortemail) {
+  } else if (sortemail) {
     query = query + " ORDER BY NTUEMAILADDRESS";
   }
 
-  console.log(query);
+  //console.log(query);
   executeQueryShowTable(query, res);
 });
 
@@ -178,8 +192,7 @@ app.get("/api/uploadedfiles", function (req, res) {
     //errresponse = executeQuery(query, res);
     //console.log("ERR RESPONSE")
     //console.log(errresponse); 
-  }
-  else {
+  } else {
     var query = "SHOW TABLES;";
     executeQuery(query, res);
     //setTimeout(errresponse = executeQuery(query, res));
@@ -206,18 +219,15 @@ app.get("/api/events", function (req, res) {
       if (sortpositiontier) {
         query = query + ", EVENTPOSITIONTIER";
       }
-    }
-    else if (sortpositiontier) {
+    } else if (sortpositiontier) {
       query = query + " ORDER BY EVENTPOSITIONTIER";
     }
 
     executeQueryShowTable(query, res);
 
-  }
-  else {
+  } else {
     var query = "SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME IN ('EVENTNAME') AND TABLE_SCHEMA='mydb'";
     executeQuery(query, res);
-    //TODO: calculate number of events 
   }
 });
 
@@ -229,9 +239,8 @@ app.get("/api/eventparticipation", function (req, res) {
 });
 
 app.get("/api/numberofstudents", function (req, res) {
-  var student_list = req.query.listname;
 
-  var query = "SELECT COUNT(*) FROM " + student_list; //Not unique Matric Number
+  var query = "SELECT COUNT(*) FROM student_masterlist"; //Not unique Matric Number
   executeQuery(query, res);
 });
 
@@ -246,9 +255,7 @@ app.put("/api/droptables", function (req, res) {
         "success": "no",
         "data": err,
       }
-    }
-
-    else {
+    } else {
       apiResult = {
         "success": "yes",
         "data": tablename
@@ -293,8 +300,7 @@ function importEventData2MySQL(filePath, filename) {
             });
 
           });
-        }
-        else {
+        } else {
           console.log("Table exists");
           //TODO: send json to frontend
         }
@@ -339,6 +345,178 @@ function importStudentData2MySQL(filePath) {
 }
 
 
+function importAttrSkillData2MySQL(filePath) {
+  let stream = fs.createReadStream(filePath);
+  let csvData = [];
+  let csvStream = csv
+    .parse()
+    .on("data", function (data) {
+      csvData.push(data);
+    })
+    .on("end", function () {
+      // Remove Header ROW
+      csvData.shift();
+      console.log(csvData);
+
+      // Open the MySQL connection
+      var sql_create_attrskill = 'CREATE TABLE IF NOT EXISTS ' + 'attribute2skillset' + ' (ATTRIBUTE VARCHAR(255) NOT NULL, CODE VARCHAR(5) NOT NULL, SKILLSET1 VARCHAR(255), SKILLSET2 VARCHAR(255), SKILLSET3 VARCHAR(255), PRIMARY KEY (ATTRIBUTE))';
+      connection.query(sql_create_attrskill, (error, response) => {
+        console.log(error || response);
+      })
+
+      let sql_import_attrskill = 'INSERT INTO attribute2skillset (ATTRIBUTE, CODE, SKILLSET1, SKILLSET2, SKILLSET3) VALUES ?';
+      connection.query(sql_import_attrskill, [csvData], (error, response) => {
+        console.log(error || response);
+      });
+      // delete file after saving to MySQL database
+      // -> you can comment the statement to see the uploaded CSV file.
+      fs.unlinkSync(filePath)
+    });
+  stream.pipe(csvStream);
+}
+
+function importEventAttriData2MySQL(filePath) {
+  let stream = fs.createReadStream(filePath);
+  let csvData = [];
+  let csvStream = csv
+    .parse()
+    .on("data", function (data) {
+      csvData.push(data);
+    })
+    .on("end", function () {
+      // Remove Header ROW
+      csvData.shift();
+      //console.log(csvData);
+
+      // Open the MySQL connection
+      var sql_create_eventattr = 'CREATE TABLE IF NOT EXISTS ' + 'event2attribute' + ' (WORKSHOPEVENT VARCHAR(255) NOT NULL, DESCRIPTION VARCHAR(255), HOST VARCHAR(255) NOT NULL, ATTRIBUTE1 VARCHAR(255), ATTRIBUTE2 VARCHAR(255), ATTRIBUTE3 VARCHAR(255), ATTRIBUTE4 VARCHAR(255), ATTRIBUTE5 VARCHAR(255), PRIMARY KEY (workshopevent));';
+
+      connection.query(sql_create_eventattr, (error, response) => {
+        console.log(error || response);
+      })
+
+      let sql_import_eventattr = 'INSERT INTO event2attribute (WORKSHOPEVENT, DESCRIPTION, HOST, ATTRIBUTE1, ATTRIBUTE2, ATTRIBUTE3, ATTRIBUTE4, ATTRIBUTE5) VALUES ?';
+      connection.query(sql_import_eventattr, [csvData], (error, response) => {
+        console.log(error || response);
+      });
+      // delete file after saving to MySQL database
+      // -> you can comment the statement to see the uploaded CSV file.
+      fs.unlinkSync(filePath)
+    });
+  stream.pipe(csvStream);
+}
+
+
+app.get('/api/skillset', (req, api_res) => {
+  var studentname = req.query.student;
+  // TODO: FIND EVENTS THAT STUDENTS HAVE PARTICIPATED
+  var student_events_participated = ["EEE Family Day", "Game Development"];
+
+
+  async function fn1(studentname) {
+    // GET LIST OF EVENTS
+    var query_eventlist = "SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME IN ('EVENTNAME') AND TABLE_SCHEMA='mydb'";
+    let promise = new Promise((resolve, reject) => {
+      connection.query(query_eventlist, (err, res) => {
+        if (err) throw err;
+        //res.json(response);
+        resolve(res);
+      })
+    });
+    var results = await promise;
+    var list_of_events = [];
+    for (let i = 0; i < results.length; i++) {
+      list_of_events.push(results[i].TABLE_NAME)
+    }
+    return list_of_events;
+    // var list_of_eventname;
+    // for (let i = 0; i < list_of_events.length; i++) {
+    //   // eventname = fn3(studentname, list_of_events[i]);
+    //   console.log(fn3(studentname, list_of_events[i]));
+    // }
+
+  };
+
+  async function fn2() {
+    // 2nd object
+    // var event_to_attribute = [];
+    // var attribute_to_skillset = [];
+
+    var i;
+    var query_event2attr = "SELECT WORKSHOPEVENT, ATTRIBUTE1, ATTRIBUTE2, ATTRIBUTE3, ATTRIBUTE4, ATTRIBUTE5 FROM EVENT2ATTRIBUTE";
+
+    let promise1 = new Promise((resolve, reject) => {
+      connection.query(query_event2attr, (err, response) => {
+        if (err) throw err;
+        //res.json(response);
+        resolve(response);
+      })
+    });
+
+    let event_to_attribute = await promise1;
+
+    let promise2 = new Promise((resolve, reject) => {
+      // 3rd object
+      query_attr2skill = "SELECT ATTRIBUTE, SKILLSET1, SKILLSET2, SKILLSET3 FROM ATTRIBUTE2SKILLSET";
+      connection.query(query_attr2skill, (err, response) => {
+        if (err) throw err;
+        resolve(response);
+      });
+    });
+    let attribute_to_skillset = await promise2;
+    var result = [event_to_attribute, attribute_to_skillset];
+    return result;
+  }
+  var list_of_eventparticipated = [];
+  fn1().then((res) => {
+
+    // for (let i = 0; i < res.length; i + 0) {
+    //   // var temp = fn3(studentname, res[i]);
+    //   // if (temp.length) {
+    //   //   list_of_eventparticipated.push(temp[0].event_name);
+    //   // }
+    // }
+    let i = 0;
+    while (i < res.length) {
+      fn3(studentname, res[i]).then((fn3_res) => {
+        if (fn3_res.length) {
+          list_of_eventparticipated.push(fn3_res[0].eventname);
+        }
+        // i++;
+      });
+      i++;
+    }
+    fn2().then((fn2_res) => {
+      // WIRA'S CODE
+      console.log("fn2_res", fn2_res[0]);
+      console.log("fn2_res", fn2_res[1]);
+      console.log("list_of_eventparticipated", list_of_eventparticipated);
+
+      const calculate_skillset = require('./tools/calculate_skillset');
+      const result = calculate_skillset(list_of_eventparticipated, fn2_res[0], fn2_res[1]);
+      console.log(result);
+      api_res.json(result);
+
+    }).catch(error => console.log("fn2 error", error));
+  }).catch(error => console.log("fn1 error", error))
+
+
+})
+
+async function fn3(studentname, tablename) {
+  var query_participation = "select eventname from " + tablename + " where studentname = '" + studentname + "';";
+
+  let promise1 = new Promise((resolve, reject) => {
+    connection.query(query_participation, (err, response) => {
+      if (err) throw err;
+      resolve(response);
+    });
+  });
+  let eventname = await promise1;
+  console.log("debug !", eventname);
+  return eventname;
+}
+
 
 // Create a Server
 let server = app.listen(8080, function () {
@@ -348,4 +526,4 @@ let server = app.listen(8080, function () {
 
   console.log("App listening at http://%s:%s", host, port)
 
-})  
+})
