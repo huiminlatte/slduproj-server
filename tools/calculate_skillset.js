@@ -4,7 +4,7 @@ module.exports = (student_events_participated, event_to_attribute, attribute_to_
     "Personal development": 0,
     "Leadership": 0,
     "Innovation": 0,
-    "Technical ": 0
+    "Technical": 0
   }
   var list_of_attributes = [];
   for (let i = 0; i < student_events_participated.length; i++) {
@@ -50,5 +50,38 @@ module.exports = (student_events_participated, event_to_attribute, attribute_to_
     if (list_of_skillset[i] == "Technical")
       skillset_result['Technical']++;
   }
-  return skillset_result;
+  console.log(skillset_result);
+
+  var max = Math.max(skillset_result['Professional development'], skillset_result['Personal development'],
+    skillset_result['Leadership'], skillset_result['Innovation'], skillset_result['Technical']);
+
+  var result = [
+    {
+      skillset: 'Professional development',
+      IndividualScore: skillset_result['Professional development'],
+      max: max
+    },
+    {
+      skillset: 'Personal development',
+      IndividualScore: skillset_result['Personal development'],
+      max: max
+    },
+    {
+      skillset: 'Leadership',
+      IndividualScore: skillset_result['Leadership'],
+      max: max
+    },
+    {
+      skillset: 'Innovation',
+      IndividualScore: skillset_result['Innovation'],
+      max: max
+    },
+    {
+      skillset: 'Technical',
+      IndividualScore: skillset_result['Technical'],
+      max: max
+    },
+  ];
+
+  return result;
 }
