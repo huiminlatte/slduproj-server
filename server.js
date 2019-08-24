@@ -408,12 +408,10 @@ function importEventAttriData2MySQL(filePath) {
 
 
 app.get('/api/skillset', (req, api_res) => {
-  var studentname = req.query.student;
+  var matricnumber = req.query.matricnumber;
   // TODO: FIND EVENTS THAT STUDENTS HAVE PARTICIPATED
-  var student_events_participated = ["EEE Family Day", "Game Development"];
 
-
-  async function fn1(studentname) {
+  async function fn1_find_all_events() {
     // GET LIST OF EVENTS
     var query_eventlist = "SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME IN ('EVENTNAME') AND TABLE_SCHEMA='mydb'";
     let promise = new Promise((resolve, reject) => {
@@ -429,15 +427,9 @@ app.get('/api/skillset', (req, api_res) => {
       list_of_events.push(results[i].TABLE_NAME)
     }
     return list_of_events;
-    // var list_of_eventname;
-    // for (let i = 0; i < list_of_events.length; i++) {
-    //   // eventname = fn3(studentname, list_of_events[i]);
-    //   console.log(fn3(studentname, list_of_events[i]));
-    // }
-
   };
 
-  async function fn2() {
+  async function fn2_getattributeskill() {
     // 2nd object
     // var event_to_attribute = [];
     // var attribute_to_skillset = [];
@@ -468,43 +460,52 @@ app.get('/api/skillset', (req, api_res) => {
     return result;
   }
   var list_of_eventparticipated = [];
-  fn1().then((res) => {
+  fn1_find_all_events().then((res) => {
 
     // for (let i = 0; i < res.length; i + 0) {
-    //   // var temp = fn3(studentname, res[i]);
+    //   // var temp = fn2_geteventparticipated(studentname, res[i]);
     //   // if (temp.length) {
     //   //   list_of_eventparticipated.push(temp[0].event_name);
     //   // }
     // }
     let i = 0;
     while (i < res.length) {
-      fn3(studentname, res[i]).then((fn3_res) => {
-        if (fn3_res.length) {
-          list_of_eventparticipated.push(fn3_res[0].eventname);
+      fn3_geteventparticipated(matricnumber, res[i]).then((fn3_geteventparticipated_res) => {
+        if (fn3_geteventparticipated_res.length) {
+          list_of_eventparticipated.push(fn3_geteventparticipated_res[0].eventname);
         }
-        // i++;
       });
       i++;
     }
-    fn2().then((fn2_res) => {
-      // WIRA'S CODE
-      console.log("fn2_res", fn2_res[0]);
-      console.log("fn2_res", fn2_res[1]);
-      console.log("list_of_eventparticipated", list_of_eventparticipated);
+    fn4_getstudentname(matricnumber).then((studentname) => {
+      fn2_getattributeskill().then((fn2_getattributeskill_res) => {
 
-      const calculate_skillset = require('./tools/calculate_skillset');
-      const result = calculate_skillset(list_of_eventparticipated, fn2_res[0], fn2_res[1]);
-      console.log(result);
-      api_res.json(result);
+        const calculate_skillset = require('./tools/calculate_skillset');
+        const result = calculate_skillset(list_of_eventparticipated, fn2_getattributeskill_res[0], fn2_getattributeskill_res[1]);
+        console.log(result);
 
-    }).catch(error => console.log("fn2 error", error));
-  }).catch(error => console.log("fn1 error", error))
+        const studentprofileAPI = {
+          studentname: studentname[0].studentname,
+          matricnumber: matricnumber,
+          studenteventlist: {
+            dynamic: "y",
+            columns: "listofeventparticipated",
+            data: list_of_eventparticipated
+          },
+          radarchartdata: result,
+        }
+
+        api_res.json(studentprofileAPI);
+
+      }).catch(error => console.log("fn2_getattributeskill error", error));
+    }).catch(error => console.log("fn4_getstudentname error", error));
+  }).catch(error => console.log("fn1_find_all_events error", error))
 
 
 })
 
-async function fn3(studentname, tablename) {
-  var query_participation = "select eventname from " + tablename + " where studentname = '" + studentname + "';";
+async function fn3_geteventparticipated(matricnumber, tablename) {
+  var query_participation = "select eventname from " + tablename + " where matricnumber = '" + matricnumber + "';";
 
   let promise1 = new Promise((resolve, reject) => {
     connection.query(query_participation, (err, response) => {
@@ -517,6 +518,19 @@ async function fn3(studentname, tablename) {
   return eventname;
 }
 
+async function fn4_getstudentname(matricnumber) {
+  var query_studentname = "select studentname from student_masterlist where matricnumber = '" + matricnumber + "';";
+
+  let promise = new Promise((resolve, reject) => {
+    connection.query(query_studentname, (err, response) => {
+      if (err) throw err;
+      resolve(response);
+    });
+  });
+  let studentname = await promise;
+
+  return studentname;
+}
 
 // Create a Server
 let server = app.listen(8080, function () {
