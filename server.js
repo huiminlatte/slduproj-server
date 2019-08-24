@@ -284,7 +284,6 @@ function importEventData2MySQL(filePath, filename) {
 
       //var eventname = csvData[0][4].replace(/\s/g, '');
       var file = filename.replace(/\.[^/.]+$/, "");
-      console.log(file);
       var sql_checkiftableexists = "SELECT 1 FROM " + file + " LIMIT 1";
       connection.query(sql_checkiftableexists, (err, response) => {
         if (err) {
@@ -531,6 +530,77 @@ async function fn4_getstudentname(matricnumber) {
 
   return studentname;
 }
+
+// Comparison function (eventabsentees)
+async function c1_eventabsentees(eventtable) {
+  var query_eventabsentees = "Select studentname, matricnumber from student_masterlist where matricnumber in (SELECT matricnumber from " + eventtable + ");";
+
+  let promise = new Promise((resolve, reject) => {
+    connection.query(query_eventabsentees, (err, response) => {
+      if (err) throw err;
+      resolve(response);
+    });
+  });
+
+  let eventabsentees = await promise;
+
+  return eventabsentees;
+}
+
+async function c2_eventcommonparticipants(event1, event2) {
+  var query_eventcommonparticipants = "Select studentname, matricnumber from " + event1 + " where matricnumber in (SELECT matricnumber from " + event2 + ");";
+
+
+  let promise = new Promise((resolve, reject) => {
+    connection.query(query_eventcommonparticipants, (err, response) => {
+      if (err) throw err;
+      resolve(response);
+    });
+  });
+
+  let eventcommonparticipants = await promise;
+
+  return eventcommonparticipants;
+}
+
+app.get('/api/compare_absentees2events', (req, res) => {
+  const event1 = req.query.event1;
+  const event2 = req.query.event2;
+  //console.log(event1, event2);
+  c1_eventabsentees(event1).then((event1_absentees) => {
+    c1_eventabsentees(event2).then((event2_absentees) => {
+      c2_eventcommonparticipants(event1, event2).then((event_commonparticipants) => {
+        const absentees_2events = require('./tools/absentees_2events');
+        const result = absentees_2events(event1_absentees, event2_absentees);
+
+        API_compare2events = {
+          "absent2events": result,
+          "absentevent1": {
+            eventname: event1,
+            numberofabsentees: event1_absentees.length,
+            event1_absentees: event1_absentees
+          },
+          "absentevent2": {
+            eventname: event2,
+            numberofabsentees: event2_absentees.length,
+            event2_absentees: event2_absentees
+          },
+          "attendbothevents": {
+            event1: event1,
+            event2: event2,
+            number: event_commonparticipants.length,
+            attendboth: event_commonparticipants
+          }
+        }
+
+        res.json(API_compare2events);
+      }).catch(error => console.log("c2 error", error));
+    }).catch(error => console.log("c1 error", error));
+  }).catch(error => console.log("c1 error", error));
+
+})
+
+
 
 // Create a Server
 let server = app.listen(8080, function () {
