@@ -7,7 +7,7 @@ const express = require('express');
 
 const app = express();
 cors = require('cors'), app.use(cors());
-app.use(bodyParser.json);
+app.use(bodyParser.json());
 global.__basedir = __dirname;
 
 const connection = mysql.createConnection({
@@ -583,35 +583,71 @@ async function c2_eventcommonparticipants(event1, event2) {
 
 app.post('/api/commonparticipants', (req, res) => {
   var event_list = req.body.Events;
-  console.log(event_list);
-  res.status(200).send("Successful");
-  // sql_commonparticipants = "SELECT " + event_list[0] + ".MATRICNUMBER, " + event_list[0] + ".STUDENTNAME FROM " + event_list[0];
-  // console.log(sql_commonparticipants);
-  // for (var i = 1; i < event_list.length; i++) {
-  //   sql_commonparticipants = sql_commonparticipants + " INNER JOIN " + event_list[i] + " ON " + event_list[0] + ".MATRICNUMBER= " + event_list[i] + ".MATRICNUMBER ";
-  // }
+  // var event_list = ["EventA", "EventB"];
+  // console.log(event_list);
+  sql_commonparticipants = "SELECT " + event_list[0] + ".MATRICNUMBER, " + event_list[0] + ".STUDENTNAME FROM " + event_list[0];
+  console.log(sql_commonparticipants);
+  for (var i = 1; i < event_list.length; i++) {
+    sql_commonparticipants = sql_commonparticipants + " INNER JOIN " + event_list[i] + " ON " + event_list[0] + ".MATRICNUMBER= " + event_list[i] + ".MATRICNUMBER ";
+  }
 
-  // connection.query(sql_commonparticipants, function (err, response) {
-  //   if (err) {
-  //     //return err
-  //     //console.log("Error while querying database :- " + err);
-  //     res.send(err);
-  //   } else {
+  connection.query(sql_commonparticipants, function (err, response) {
+    if (err) {
+      //return err
+      //console.log("Error while querying database :- " + err);
+      res.send(err);
+    } else {
 
-  //     res.json({ "commonparticipants": response, "tables": event_list });
-  //   }
-  // });
+      res.json({ "commonparticipants": response, "tables": event_list });
+    }
+  });
 
 })
 
-app.get('/api/commonabsentees', (req, res) => {
-  // const event_list = ['EventA', 'EventB'];
+app.post('/api/commonabsentees', (req, res) => {
+  const event_list = req.body.Events;
 
-  // var sql_commonabsentees = "DROP TABLE IF EXISTS all_participants; CREATE TEMPORARY TABLE all_participants SELECT MATRICNUMBER FROM " + event_list[0];
+  var sql_droptable = "DROP TABLE IF EXISTS all_participants";
+  var sql_allparticipants = "CREATE TEMPORARY TABLE all_participants SELECT MATRICNUMBER FROM " + event_list[0];
+  var sql_commonabsentees = "SELECT STUDENT_MASTERLIST.MATRICNUMBER, STUDENT_MASTERLIST.STUDENTNAME FROM STUDENT_MASTERLIST LEFT JOIN ALL_PARTICIPANTS ON STUDENT_MASTERLIST.MATRICNUMBER=ALL_PARTICIPANTS.MATRICNUMBER WHERE ALL_PARTICIPANTS.MATRICNUMBER IS NULL;"
 
-  // connection.query(sql_commonabsentees, (sql_req, sql_res)=>{
+  console.log(sql_droptable);
+  connection.query(sql_droptable, function (err, response) {
+    if (err) {
+      res.send(err);
+    } else {
+      // console.log(sql_droptable);
+      // console.log(response);
+      connection.query(sql_allparticipants, function (err2, response2) {
+        if (err2) {
+          res.send(err2);
+        }
+        else {
+          // console.log(sql_allparticipants);
+          // console.log(response2);
+          connection.query(sql_commonabsentees, function (err3, response3) {
+            if (err3) {
+              res.send(err3);
+            }
+            else {
+              console.log(sql_commonabsentees);
+              console.log(response3);
+              connection.query(sql_droptable, function (err4, response4) {
+                if (err4) {
+                  res.send(err4);
+                }
+                else {
+                  res.json({ "event_list": event_list, "common_absentees": response3 });
 
-  // })
+                }
+              })
+            }
+          })
+
+        }
+      })
+    }
+  });
 
 })
 
