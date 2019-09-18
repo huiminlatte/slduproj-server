@@ -1,12 +1,13 @@
 const fs = require('fs');
 const mysql = require('mysql');
 const csv = require('fast-csv');
-
+const bodyParser = require('body-parser');
 const multer = require('multer');
 const express = require('express');
 
 const app = express();
 cors = require('cors'), app.use(cors());
+app.use(bodyParser.json);
 global.__basedir = __dirname;
 
 const connection = mysql.createConnection({
@@ -62,6 +63,8 @@ app.post('/api/uploadstudentmasterlist', upload.single("uploadfile"), (req, res)
     'file': req.file
   });
 });
+
+
 
 app.post('/api/uploadattribute2skillset', upload.single("uploadfile"), (req, res) => {
   importAttrSkillData2MySQL(__basedir + '/uploads/' + req.file.filename);
@@ -327,15 +330,34 @@ function importStudentData2MySQL(filePath) {
       csvData.shift();
 
 
-      // Open the MySQL connection
       var sql_create_student_masterlist = 'CREATE TABLE IF NOT EXISTS ' + 'student_masterlist' + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, PRIMARY KEY (MATRICNUMBER))';
       connection.query(sql_create_student_masterlist, (error, response) => {
         console.log(error || response);
       })
-      let sql_import_studentdata = 'INSERT INTO student_masterlist (STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS) VALUES ?';
-      connection.query(sql_import_studentdata, [csvData], (error, response) => {
+      let sql_import_studentdata = 'INSERT INTO student_masterlist (studentname, matricnumber, ntuemailaddress) SELECT * FROM (SELECT ?, ?, ?) AS tmp WHERE NOT EXISTS (SELECT matricnumber FROM student_masterlist WHERE matricnumber = ? ) LIMIT 1;';
+      for (var i = 0; i < csvData.length; i++) {
+        connection.query(sql_import_studentdata, [csvData[i][0], csvData[i][1], csvData[i][2], csvData[i][1]], (error, response) => {
+          console.log(error || response);
+        });
+      }
+
+      var sql_dropexistingstudentmasterlist = "DROP TABLE IF EXISTS ACTIVESTUDENTMASTERLIST";
+      connection.query(sql_dropexistingstudentmasterlist, (error, response) => {
+        console.log(error || response);
+      })
+
+      var sql_create_active_student_masterlist = 'CREATE TABLE IF NOT EXISTS ' + 'activestudentmasterlist' + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, PRIMARY KEY (MATRICNUMBER))';
+      connection.query(sql_create_active_student_masterlist, (error, response) => {
+        console.log(error || response);
+      })
+      let sql_importactivestudentmasterlist = 'INSERT INTO activestudentmasterlist (studentname, matricnumber, ntuemailaddress) VALUES ? ';
+      connection.query(sql_importactivestudentmasterlists, [csvData], (error, response) => {
         console.log(error || response);
       });
+
+
+
+
       // delete file after saving to MySQL database
       // -> you can comment the statement to see the uploaded CSV file.
       fs.unlinkSync(filePath)
@@ -405,7 +427,6 @@ function importEventAttriData2MySQL(filePath) {
   stream.pipe(csvStream);
 }
 
-
 app.get('/api/skillset', (req, api_res) => {
   var matricnumber = req.query.matricnumber;
   // TODO: FIND EVENTS THAT STUDENTS HAVE PARTICIPATED
@@ -461,12 +482,6 @@ app.get('/api/skillset', (req, api_res) => {
   var list_of_eventparticipated = [];
   fn1_find_all_events().then((res) => {
 
-    // for (let i = 0; i < res.length; i + 0) {
-    //   // var temp = fn2_geteventparticipated(studentname, res[i]);
-    //   // if (temp.length) {
-    //   //   list_of_eventparticipated.push(temp[0].event_name);
-    //   // }
-    // }
     let i = 0;
     while (i < res.length) {
       fn3_geteventparticipated(matricnumber, res[i]).then((fn3_geteventparticipated_res) => {
@@ -499,8 +514,6 @@ app.get('/api/skillset', (req, api_res) => {
       }).catch(error => console.log("fn2_getattributeskill error", error));
     }).catch(error => console.log("fn4_getstudentname error", error));
   }).catch(error => console.log("fn1_find_all_events error", error))
-
-
 })
 
 async function fn3_geteventparticipated(matricnumber, tablename) {
@@ -562,6 +575,40 @@ async function c2_eventcommonparticipants(event1, event2) {
 
   return eventcommonparticipants;
 }
+
+app.post('/api/commonparticipants', (req, res) => {
+  var event_list = req.body.Events;
+  console.log(event_list);
+  res.status(200).send("Successful");
+  // sql_commonparticipants = "SELECT " + event_list[0] + ".MATRICNUMBER, " + event_list[0] + ".STUDENTNAME FROM " + event_list[0];
+  // console.log(sql_commonparticipants);
+  // for (var i = 1; i < event_list.length; i++) {
+  //   sql_commonparticipants = sql_commonparticipants + " INNER JOIN " + event_list[i] + " ON " + event_list[0] + ".MATRICNUMBER= " + event_list[i] + ".MATRICNUMBER ";
+  // }
+
+  // connection.query(sql_commonparticipants, function (err, response) {
+  //   if (err) {
+  //     //return err
+  //     //console.log("Error while querying database :- " + err);
+  //     res.send(err);
+  //   } else {
+
+  //     res.json({ "commonparticipants": response, "tables": event_list });
+  //   }
+  // });
+
+})
+
+app.get('/api/commonabsentees', (req, res) => {
+  // const event_list = ['EventA', 'EventB'];
+
+  // var sql_commonabsentees = "DROP TABLE IF EXISTS all_participants; CREATE TEMPORARY TABLE all_participants SELECT MATRICNUMBER FROM " + event_list[0];
+
+  // connection.query(sql_commonabsentees, (sql_req, sql_res)=>{
+
+  // })
+
+})
 
 app.get('/api/compare_absentees2events', (req, res) => {
   const event1 = req.query.event1;
