@@ -503,10 +503,15 @@ app.get('/api/skillset', (req, api_res) => {
           matricnumber: matricnumber,
           studenteventlist: {
             dynamic: "y",
-            columns: "listofeventparticipated",
-            data: list_of_eventparticipated
+            columns: ["listofeventparticipated"],
+            data: []
           },
           radarchartdata: result,
+        }
+
+        for (let i = 0; i < list_of_eventparticipated.length; i++) {
+          let current_event = { "listofeventparticipated": list_of_eventparticipated[i] };
+          studentprofileAPI.studenteventlist.data.push(current_event);
         }
 
         api_res.json(studentprofileAPI);
