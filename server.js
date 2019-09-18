@@ -610,7 +610,7 @@ app.post('/api/commonabsentees', (req, res) => {
   var sql_droptable = "DROP TABLE IF EXISTS all_participants";
   var sql_allparticipants = "CREATE TEMPORARY TABLE all_participants SELECT MATRICNUMBER FROM " + event_list[0];
   for (var i = 1; i < event_list.length; i++) {
-    sql_allparticipants = sql_allparticipants + "UNION SELECT MATRICNUMBER FROM " + event_list[i];
+    sql_allparticipants = sql_allparticipants + " UNION SELECT MATRICNUMBER FROM " + event_list[i];
   }
   var sql_commonabsentees = "SELECT STUDENT_MASTERLIST.MATRICNUMBER, STUDENT_MASTERLIST.STUDENTNAME FROM STUDENT_MASTERLIST LEFT JOIN ALL_PARTICIPANTS ON STUDENT_MASTERLIST.MATRICNUMBER=ALL_PARTICIPANTS.MATRICNUMBER WHERE ALL_PARTICIPANTS.MATRICNUMBER IS NULL;"
 
