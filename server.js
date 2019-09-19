@@ -128,10 +128,10 @@ var executeQueryShowTable = function (query, res) {
 // sortemail= 1
 // sortmatricnumber=1
 app.get("/api/students/", function (req, res) {
-  Object.keys(req.query)
+  // Object.keys(req.query)
   var studentname = req.query.name;
   var matricnumber = req.query.matricnumber;
-  console.log(studentname, matricnumber);
+  // console.log(studentname, matricnumber);
   var tier = req.query.tier;
 
   var query = "select * from student_masterlist";
