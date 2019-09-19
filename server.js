@@ -128,8 +128,10 @@ var executeQueryShowTable = function (query, res) {
 // sortemail= 1
 // sortmatricnumber=1
 app.get("/api/students/", function (req, res) {
+  Object.keys(req.query)
   var studentname = req.query.name;
   var matricnumber = req.query.matricnumber;
+  console.log(studentname, matricnumber);
   var tier = req.query.tier;
 
   var query = "select * from student_masterlist";
@@ -350,7 +352,7 @@ function importStudentData2MySQL(filePath) {
       connection.query(sql_create_active_student_masterlist, (error, response) => {
         console.log(error || response);
       })
-      let sql_importactivestudentmasterlist = 'INSERT INTO activestudentmasterlist (studentname, matricnumber, ntuemailaddress) VALUES ? ';
+      let sql_importactivestudentmasterlists = 'INSERT INTO activestudentmasterlist (studentname, matricnumber, ntuemailaddress) VALUES ? ';
       connection.query(sql_importactivestudentmasterlists, [csvData], (error, response) => {
         console.log(error || response);
       });
