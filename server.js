@@ -101,11 +101,7 @@ var executeQueryShowTable = function (query, res) {
   //var request = new connection.Request();
   // query to the database
   connection.query(query, function (err, response) {
-    if (err) {
-      //return err
-      //console.log("Error while querying database :- " + err);
-      res.send(err);
-    } else {
+    try {
       var apiResult = {};
       apiResult = {
         // TODO: "status": "found"
@@ -118,53 +114,39 @@ var executeQueryShowTable = function (query, res) {
       //return response;
       //console.log(Object.keys(response[0]));
       res.json(apiResult);
+
     }
+    catch (err) {
+      //return err
+      //console.log("Error while querying database :- " + err);
+      res.send(err);
+    }
+
+
   });
 }
 
 // 2 - Search students from masterlist 
-// added 3 more functions: sortname=1 to sort name ascending
-// sortemail= 1
-// sortmatricnumber=1
+
 app.get("/api/students/", function (req, res) {
   var studentname = req.query.name;
   var matricnumber = req.query.matricnumber;
-  var tier = req.query.tier;
+  var ntuemailaddress = req.query.ntuemailaddress;
 
-  var query = "select * from student_masterlist";
-
-  var sortname = req.query.sortname; //Sort A-Z (name)
-  var sortmatricnumber = req.query.sortmatricnumber;
-  var sortemail = req.query.sortemail;
+  var query = "select * from student_masterlist ";
 
   if (matricnumber) {
     query = query + " where matricnumber LIKE '%" + matricnumber + "%'";
   }
-  if (studentname) {
-    if (matricnumber) {
-      query = query + " and ";
-    } else {
-      query = query + " where ";
-    }
-    query = query + "studentname LIKE '%" + studentname + "%'";
+  else if (studentname) {
+    query = query + "where studentname LIKE '%" + studentname + "%'";
 
-  } else if (tier) {
-    if (matricnumber || studentname) {
-      query = query + " and ";
-    } else {
-      query = query + " where ";
-    }
-    query = query + "tier=" + tier;
   }
-  if (sortname) {
-    query = query + " ORDER BY STUDENTNAME";
-  } else if (sortmatricnumber) {
-    query = query + " ORDER BY MATRICNUMBER";
-  } else if (sortemail) {
-    query = query + " ORDER BY NTUEMAILADDRESS";
+  else if (ntuemailaddress) {
+    query = query + " where ntuemailaddress LIKE '%" + ntuemailaddress + "%'";
   }
 
-  //console.log(query);
+  console.log(query);
   executeQueryShowTable(query, res);
 });
 
@@ -247,7 +229,6 @@ app.get("/api/numberofstudents", function (req, res) {
 });
 
 
-//Delete table
 app.put("/api/droptables", function (req, res) {
   var tablename = req.query.tablename;
   var apiResult = {};
@@ -287,25 +268,7 @@ function importEventData2MySQL(filePath, filename) {
 
       //var eventname = csvData[0][4].replace(/\s/g, '');
       var file = filename.replace(/\.[^/.]+$/, "");
-      // var sql_checkiftableexists = "SELECT 1 FROM " + file + " LIMIT 1";
-      // connection.query(sql_checkiftableexists, (err, response) => {
-      //   if (err) {
-      //     // var sql_create_eventtable = 'CREATE TABLE IF NOT EXISTS ' + file + ' (TIMESTAMP VARCHAR(255), STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, EVENTNAME VARCHAR(255), EVENTPOSITION VARCHAR(255), EVENTPOSITIONTIER INT, EVENTSTARTDATE VARCHAR(255), EVENTENDDATE VARCHAR(255), PRIMARY KEY (MATRICNUMBER))';
-
-      //     connection.query(sql_create_eventtable, (error, response) => {
-      //       if (error) throw error;
-      //       console.log("response", response);
-
-      //       let sql_import_eventdata = 'INSERT INTO ' + file + ' (TIMESTAMP, STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, EVENTNAME, EVENTPOSITION, EVENTPOSITIONTIER, EVENTSTARTDATE, EVENTENDDATE) VALUES ?';
-      //       connection.query(sql_import_eventdata, [csvData], (error, response) => {
-      //         console.log(error || response);
-      //       });
-
-      //     });
-      //   } else {
-      //     console.log("Table exists");
-      //     //TODO: send json to frontend
-      //   }
+      // 
 
       // Create table for first time adding event
       sql_createeventfile = 'CREATE TABLE IF NOT EXISTS EVENTS (TIMESTAMP VARCHAR(255), STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255), EVENTNAME VARCHAR(255), EVENTPOSITION VARCHAR(255), EVENTPOSITIONTIER INT, EVENTSTARTDATE VARCHAR(255), EVENTENDDATE VARCHAR(255))';
@@ -321,6 +284,28 @@ function importEventData2MySQL(filePath, filename) {
             connection.query(sql_import_eventdata, [csvData], (error3, response3) => {
               if (error3) throw error3;
               console.log(error3 || response3);
+              var sql_checkiftableexists = "SELECT 1 FROM " + file + " LIMIT 1";
+              connection.query(sql_checkiftableexists, (err, response) => {
+                if (err) {
+                  var sql_create_eventtable = 'CREATE TABLE IF NOT EXISTS ' + file + ' (TIMESTAMP VARCHAR(255), STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, EVENTNAME VARCHAR(255), EVENTPOSITION VARCHAR(255), EVENTPOSITIONTIER INT, EVENTSTARTDATE VARCHAR(255), EVENTENDDATE VARCHAR(255), PRIMARY KEY (MATRICNUMBER))';
+
+                  connection.query(sql_create_eventtable, (error, response) => {
+                    if (error) throw error;
+                    console.log("response", response);
+
+                    let sql_import_eventdata = 'INSERT INTO ' + file + ' (TIMESTAMP, STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, EVENTNAME, EVENTPOSITION, EVENTPOSITIONTIER, EVENTSTARTDATE, EVENTENDDATE) VALUES ?';
+                    connection.query(sql_import_eventdata, [csvData], (error, response) => {
+                      console.log(error || response);
+                    });
+
+                  });
+                } else {
+                  console.log("Table exists");
+                  //TODO: send json to frontend
+                }
+              })
+
+
             });
           }
 
@@ -581,10 +566,8 @@ async function c2_eventcommonparticipants(event1, event2) {
 
 app.post('/api/commonparticipants', (req, res) => {
   var event_list = req.body.Events;
-  // var event_list = ["EventA", "EventB"];
-  // console.log(event_list);
   sql_commonparticipants = "SELECT " + event_list[0] + ".MATRICNUMBER, " + event_list[0] + ".STUDENTNAME FROM " + event_list[0];
-  console.log(sql_commonparticipants);
+
   for (var i = 1; i < event_list.length; i++) {
     sql_commonparticipants = sql_commonparticipants + " INNER JOIN " + event_list[i] + " ON " + event_list[0] + ".MATRICNUMBER= " + event_list[i] + ".MATRICNUMBER ";
   }
