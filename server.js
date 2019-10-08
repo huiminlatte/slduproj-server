@@ -587,8 +587,9 @@ app.post('/api/commonparticipants', (req, res) => {
 app.post('/api/commonabsentees', (req, res) => {
   const event_list = req.body.Events;
 
-  var sql_droptable = "DROP TABLE IF EXISTS all_participants";
-  var sql_allparticipants = "CREATE TEMPORARY TABLE all_participants SELECT MATRICNUMBER FROM " + event_list[0];
+
+  var sql_droptable = "DROP TABLE IF EXISTS ALL_PARTICIPANTS";
+  var sql_allparticipants = "CREATE TEMPORARY TABLE ALL_PARTICIPANTS SELECT MATRICNUMBER FROM " + event_list[0];
   for (var i = 1; i < event_list.length; i++) {
     sql_allparticipants = sql_allparticipants + " UNION SELECT MATRICNUMBER FROM " + event_list[i];
   }
@@ -598,6 +599,7 @@ app.post('/api/commonabsentees', (req, res) => {
   connection.query(sql_droptable, function (err, response) {
     if (err) {
       res.send(err);
+
     } else {
       // console.log(sql_droptable);
       // console.log(response);
