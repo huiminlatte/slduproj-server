@@ -277,8 +277,9 @@ function importEventData2MySQL(filePath, filename) {
         console.log(error || response);
         let sql_check_eventexists = "select exists(select * from events where eventname='" + file + "') as RESULT";
         connection.query(sql_check_eventexists, (error2, response2) => {
-          console.log(response2[0].RESULT || error2);
-          if (!response2[0].RESULT) {
+          // console.log(response2[0].RESULT || error2);
+          // if (!response2[0].RESULT) {
+          if (!response2) {
             let sql_import_eventdata = 'INSERT INTO EVENTS (TIMESTAMP, STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, EVENTNAME, EVENTPOSITION, EVENTPOSITIONTIER, EVENTSTARTDATE, EVENTENDDATE) VALUES ?';
             // TODO: match csvData to the mysql columns (dynamic)
             connection.query(sql_import_eventdata, [csvData], (error3, response3) => {
