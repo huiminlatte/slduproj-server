@@ -128,39 +128,46 @@ var executeQueryShowTable = function (query, res) {
 
 // 2 - Search students from masterlist 
 
-app.get("/api/students/", function (req, res) {
-  var studentname = req.query.name;
-  var matricnumber = req.query.matricnumber;
-  var ntuemailaddress = req.query.ntuemailaddress;
-
-  var query = "select * from STUDENT_MASTERLIST ";
-
-  if (matricnumber) {
-    query = query + " where matricnumber LIKE '%" + matricnumber + "%'";
-  }
-  else if (studentname) {
-    query = query + "where studentname LIKE '%" + studentname + "%'";
-
-  }
-  else if (ntuemailaddress) {
-    query = query + " where ntuemailaddress LIKE '%" + ntuemailaddress + "%'";
-  }
-
-  console.log(query);
+app.get("/api/search/studentname/", function (req, res) {
+  var studentname = req.query.name; a
+  var query = "select * from STUDENT_MASTERLIST where STUDENTNAME LIKE '%" + studentname + "%'";
   executeQueryShowTable(query, res);
 });
 
-
-
-//THIS IS NOT USABLE YET
-app.get("/api/students/participation/", function (req, res) {
+app.get("/api/search/matricnumber/", function (req, res) {
   var matricnumber = req.query.matricnumber;
-  var studentname = req.query.studentname;
+  var query = "select * from STUDENT_MASTERLIST where MATRICNUMBER LIKE '%" + matricnumber + "%'";
+  executeQueryShowTable(query, res);
+});
 
+app.get("/api/search/ntuemailaddress/", function (req, res) {
+  var ntuemailaddress = req.query.ntuemailaddress;
+  var query = "select * from STUDENT_MASTERLIST where NTUEMAILADDRESS LIKE '%" + ntuemailaddress + "%'";
+  executeQueryShowTable(query, res);
+});
 
-  var query = "select * from " + eventlist + " where matricnumber='" + matricnumber + "'";
+app.get("/api/search/event/", function (req, res) {
+  var eventname = req.query.eventname;
+  var query = "select * from EVENTS where EVENTNAME LIKE '%" + eventname + "%'";
+  executeQueryShowTable(query, res);
+});
 
-  //// TODO: 
+app.get("/api/search/eventposition/", function (req, res) {
+  var eventposition = req.query.eventposition;
+  var query = "select * from EVENTS where EVENTPOSITION LIKE '%" + eventposition + "%'";
+  executeQueryShowTable(query, res);
+});
+
+app.get("/api/search/eventstartyear/", function (req, res) {
+  var eventstartyear = req.query.eventstartyear;
+  var query = "SELECT * FROM EVENTS WHERE YEAR(EVENTSTARTDATE)=" + eventstartyear;
+  executeQueryShowTable(query, res);
+});
+
+app.get("/api/search/eventendyear/", function (req, res) {
+  var eventendyear = req.query.eventendyear;
+  var query = "SELECT * FROM EVENTS WHERE YEAR(EVENTENDDATE)=" + eventendyear;
+  executeQueryShowTable(query, res);
 });
 
 
@@ -271,7 +278,7 @@ function importEventData2MySQL(filePath, filename) {
       // 
 
       // Create table for first time adding event
-      sql_createeventfile = 'CREATE TABLE IF NOT EXISTS EVENTS (TIMESTAMP VARCHAR(255), STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255), EVENTNAME VARCHAR(255), EVENTPOSITION VARCHAR(255), EVENTPOSITIONTIER INT, EVENTSTARTDATE VARCHAR(255), EVENTENDDATE VARCHAR(255))';
+      sql_createeventfile = 'CREATE TABLE IF NOT EXISTS EVENTS (TIMESTAMP VARCHAR(255), STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255), EVENTNAME VARCHAR(255), EVENTPOSITION VARCHAR(255), EVENTPOSITIONTIER INT, EVENTSTARTDATE DATE, EVENTENDDATE DATE)';
       connection.query(sql_createeventfile, (error, response) => {
         if (error) throw error;
         console.log(error || response);
