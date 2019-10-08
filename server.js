@@ -385,12 +385,12 @@ function importAttrSkillData2MySQL(filePath) {
       console.log(csvData);
 
       // Open the MySQL connection
-      var sql_create_attrskill = 'CREATE TABLE IF NOT EXISTS ' + 'attribute2skillset' + ' (ATTRIBUTE VARCHAR(255) NOT NULL, CODE VARCHAR(5) NOT NULL, SKILLSET1 VARCHAR(255), SKILLSET2 VARCHAR(255), SKILLSET3 VARCHAR(255), PRIMARY KEY (ATTRIBUTE))';
+      var sql_create_attrskill = 'CREATE TABLE IF NOT EXISTS ' + 'ATTRIBUTE2SKILLSET' + ' (ATTRIBUTE VARCHAR(255) NOT NULL, CODE VARCHAR(5) NOT NULL, SKILLSET1 VARCHAR(255), SKILLSET2 VARCHAR(255), SKILLSET3 VARCHAR(255), PRIMARY KEY (ATTRIBUTE))';
       connection.query(sql_create_attrskill, (error, response) => {
         console.log(error || response);
       })
 
-      let sql_import_attrskill = 'INSERT INTO attribute2skillset (ATTRIBUTE, CODE, SKILLSET1, SKILLSET2, SKILLSET3) VALUES ?';
+      let sql_import_attrskill = 'INSERT INTO ATTRIBUTE2SKILLSET (ATTRIBUTE, CODE, SKILLSET1, SKILLSET2, SKILLSET3) VALUES ?';
       connection.query(sql_import_attrskill, [csvData], (error, response) => {
         console.log(error || response);
       });
@@ -415,13 +415,13 @@ function importEventAttriData2MySQL(filePath) {
       //console.log(csvData);
 
       // Open the MySQL connection
-      var sql_create_eventattr = 'CREATE TABLE IF NOT EXISTS ' + 'event2attribute' + ' (WORKSHOPEVENT VARCHAR(255) NOT NULL, DESCRIPTION VARCHAR(255), HOST VARCHAR(255) NOT NULL, ATTRIBUTE1 VARCHAR(255), ATTRIBUTE2 VARCHAR(255), ATTRIBUTE3 VARCHAR(255), ATTRIBUTE4 VARCHAR(255), ATTRIBUTE5 VARCHAR(255), PRIMARY KEY (workshopevent));';
+      var sql_create_eventattr = 'CREATE TABLE IF NOT EXISTS ' + 'EVENT2ATTRIBUTE' + ' (WORKSHOPEVENT VARCHAR(255) NOT NULL, DESCRIPTION VARCHAR(255), HOST VARCHAR(255) NOT NULL, ATTRIBUTE1 VARCHAR(255), ATTRIBUTE2 VARCHAR(255), ATTRIBUTE3 VARCHAR(255), ATTRIBUTE4 VARCHAR(255), ATTRIBUTE5 VARCHAR(255), PRIMARY KEY (workshopevent));';
 
       connection.query(sql_create_eventattr, (error, response) => {
         console.log(error || response);
       })
 
-      let sql_import_eventattr = 'INSERT INTO event2attribute (WORKSHOPEVENT, DESCRIPTION, HOST, ATTRIBUTE1, ATTRIBUTE2, ATTRIBUTE3, ATTRIBUTE4, ATTRIBUTE5) VALUES ?';
+      let sql_import_eventattr = 'INSERT INTO EVENT2ATTRIBUTE (WORKSHOPEVENT, DESCRIPTION, HOST, ATTRIBUTE1, ATTRIBUTE2, ATTRIBUTE3, ATTRIBUTE4, ATTRIBUTE5) VALUES ?';
       connection.query(sql_import_eventattr, [csvData], (error, response) => {
         console.log(error || response);
       });
@@ -520,7 +520,7 @@ async function fn2_getattributeskill() {
 }
 
 async function fn3_getstudentname(matricnumber) {
-  var query_studentname = "select studentname from student_masterlist where matricnumber LIKE '" + matricnumber + "';";
+  var query_studentname = "select studentname from STUDENT_MASTERLIST where matricnumber LIKE '" + matricnumber + "';";
 
   let promise = new Promise((resolve, reject) => {
     connection.query(query_studentname, (err, response) => {
