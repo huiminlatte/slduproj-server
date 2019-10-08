@@ -475,7 +475,7 @@ app.get('/api/skillset', (req, api_res) => {
 })
 
 async function fn1_geteventparticipated(matricnumber) {
-  var query_participation = "select * from events where matricnumber LIKE '" + matricnumber + "'";
+  var query_participation = "select * from EVENTS where matricnumber LIKE '" + matricnumber + "'";
 
   let promise1 = new Promise((resolve, reject) => {
     connection.query(query_participation, (err, response) => {
