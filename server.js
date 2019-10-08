@@ -133,7 +133,7 @@ app.get("/api/students/", function (req, res) {
   var matricnumber = req.query.matricnumber;
   var ntuemailaddress = req.query.ntuemailaddress;
 
-  var query = "select * from student_masterlist ";
+  var query = "select * from STUDENT_MASTERLIST ";
 
   if (matricnumber) {
     query = query + " where matricnumber LIKE '%" + matricnumber + "%'";
@@ -224,7 +224,7 @@ app.get("/api/eventparticipation", function (req, res) {
 
 app.get("/api/numberofstudents", function (req, res) {
 
-  var query = "SELECT COUNT(*) FROM student_masterlist";
+  var query = "SELECT COUNT(*) FROM STUDENT_MASTERLIST";
   executeQuery(query, res);
 });
 
@@ -338,11 +338,11 @@ function importStudentData2MySQL(filePath) {
       csvData.shift();
 
 
-      var sql_create_student_masterlist = 'CREATE TABLE IF NOT EXISTS ' + 'student_masterlist' + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, PRIMARY KEY (MATRICNUMBER))';
+      var sql_create_student_masterlist = 'CREATE TABLE IF NOT EXISTS ' + 'STUDENT_MASTERLIST' + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, PRIMARY KEY (MATRICNUMBER))';
       connection.query(sql_create_student_masterlist, (error, response) => {
         console.log(error || response);
       })
-      let sql_import_studentdata = 'INSERT INTO student_masterlist (studentname, matricnumber, ntuemailaddress) SELECT * FROM (SELECT ?, ?, ?) AS tmp WHERE NOT EXISTS (SELECT matricnumber FROM student_masterlist WHERE matricnumber = ? ) LIMIT 1;';
+      let sql_import_studentdata = 'INSERT INTO STUDENT_MASTERLIST (studentname, matricnumber, ntuemailaddress) SELECT * FROM (SELECT ?, ?, ?) AS tmp WHERE NOT EXISTS (SELECT matricnumber FROM STUDENT_MASTERLIST WHERE matricnumber = ? ) LIMIT 1;';
       for (var i = 0; i < csvData.length; i++) {
         connection.query(sql_import_studentdata, [csvData[i][0], csvData[i][1], csvData[i][2], csvData[i][1]], (error, response) => {
           console.log(error || response);
@@ -535,7 +535,7 @@ async function fn3_getstudentname(matricnumber) {
 
 // Comparison function (eventabsentees)
 async function c1_eventabsentees(eventtable) {
-  var query_eventabsentees = "Select studentname, matricnumber from student_masterlist where matricnumber in (SELECT matricnumber from " + eventtable + ");";
+  var query_eventabsentees = "Select studentname, matricnumber from STUDENT_MASTERLIST where matricnumber in (SELECT matricnumber from " + eventtable + ");";
 
   let promise = new Promise((resolve, reject) => {
     connection.query(query_eventabsentees, (err, response) => {
