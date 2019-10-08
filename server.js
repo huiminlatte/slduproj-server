@@ -275,11 +275,11 @@ function importEventData2MySQL(filePath, filename) {
       connection.query(sql_createeventfile, (error, response) => {
         if (error) throw error;
         console.log(error || response);
-        let sql_check_eventexists = "select exists(select * from events where eventname='" + file + "') as RESULT";
+        let sql_check_eventexists = "SELECT EXISTS(SELECT * FROM EVENTS WHERE EVENTNAME='" + file + "') as RESULT";
         connection.query(sql_check_eventexists, (error2, response2) => {
           // console.log(response2[0].RESULT || error2);
           // if (!response2[0].RESULT) {
-          if (!response2) {
+          if (!response2[0].RESULT) {
             let sql_import_eventdata = 'INSERT INTO EVENTS (TIMESTAMP, STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, EVENTNAME, EVENTPOSITION, EVENTPOSITIONTIER, EVENTSTARTDATE, EVENTENDDATE) VALUES ?';
             // TODO: match csvData to the mysql columns (dynamic)
             connection.query(sql_import_eventdata, [csvData], (error3, response3) => {
@@ -292,8 +292,6 @@ function importEventData2MySQL(filePath, filename) {
 
                   connection.query(sql_create_eventtable, (error, response) => {
                     if (error) throw error;
-                    console.log("response", response);
-
                     let sql_import_eventdata = 'INSERT INTO ' + file + ' (TIMESTAMP, STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, EVENTNAME, EVENTPOSITION, EVENTPOSITIONTIER, EVENTSTARTDATE, EVENTENDDATE) VALUES ?';
                     connection.query(sql_import_eventdata, [csvData], (error, response) => {
                       console.log(error || response);
@@ -354,11 +352,11 @@ function importStudentData2MySQL(filePath) {
         console.log(error || response);
       })
 
-      var sql_create_active_student_masterlist = 'CREATE TABLE IF NOT EXISTS ' + 'activestudentmasterlist' + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, PRIMARY KEY (MATRICNUMBER))';
+      var sql_create_active_student_masterlist = 'CREATE TABLE IF NOT EXISTS ' + 'ACTIVESTUDENTMASTERLIST' + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, PRIMARY KEY (MATRICNUMBER))';
       connection.query(sql_create_active_student_masterlist, (error, response) => {
         console.log(error || response);
       })
-      let sql_importactivestudentmasterlist = 'INSERT INTO activestudentmasterlist (studentname, matricnumber, ntuemailaddress) VALUES ? ';
+      let sql_importactivestudentmasterlist = 'INSERT INTO ACTIVESTUDENTMASTERLIST (studentname, matricnumber, ntuemailaddress) VALUES ? ';
       connection.query(sql_importactivestudentmasterlist, [csvData], (error, response) => {
         console.log(error || response);
       });
