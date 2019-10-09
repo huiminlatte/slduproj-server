@@ -100,6 +100,7 @@ var executeQuery = function (query, res) {
 var executeQueryShowTable = function (query, res) {
   //var request = new connection.Request();
   // query to the database
+  console.log("Query", query);
   connection.query(query, function (err, response) {
     try {
       var apiResult = {};
@@ -110,15 +111,11 @@ var executeQueryShowTable = function (query, res) {
         "data": response
       }
 
-      //console.log("EXECUTEQUERY");
-      //return response;
-      //console.log(Object.keys(response[0]));
       res.json(apiResult);
 
     }
     catch (err) {
-      //return err
-      //console.log("Error while querying database :- " + err);
+
       res.send(err);
     }
 
@@ -129,7 +126,7 @@ var executeQueryShowTable = function (query, res) {
 // 2 - Search students from masterlist 
 
 app.get("/api/search/studentname/", function (req, res) {
-  var studentname = req.query.name; a
+  var studentname = req.query.studentname;
   var query = "select * from STUDENT_MASTERLIST where STUDENTNAME LIKE '%" + studentname + "%'";
   executeQueryShowTable(query, res);
 });
@@ -160,13 +157,25 @@ app.get("/api/search/eventposition/", function (req, res) {
 
 app.get("/api/search/eventstartyear/", function (req, res) {
   var eventstartyear = req.query.eventstartyear;
-  var query = "SELECT * FROM EVENTS WHERE YEAR(EVENTSTARTDATE)=" + eventstartyear;
+  if (!eventstartyear) {
+    var query = "SELECT * FROM EVENTS" + eventstartyear;
+  }
+  else {
+    var query = "SELECT * FROM EVENTS WHERE YEAR(EVENTSTARTDATE)=" + eventstartyear;
+
+  }
   executeQueryShowTable(query, res);
 });
 
 app.get("/api/search/eventendyear/", function (req, res) {
   var eventendyear = req.query.eventendyear;
-  var query = "SELECT * FROM EVENTS WHERE YEAR(EVENTENDDATE)=" + eventendyear;
+  if (!eventendyear) {
+    var query = "SELECT * FROM EVENTS";
+  }
+  else {
+    var query = "SELECT * FROM EVENTS WHERE YEAR(EVENTENDDATE)=" + eventendyear;
+
+  }
   executeQueryShowTable(query, res);
 });
 
@@ -440,19 +449,34 @@ function importEventAttriData2MySQL(filePath) {
 app.get('/api/skillset', (req, api_res) => {
   var matricnumber = req.query.matricnumber;
   var list_of_eventparticipated = [];
-  var studentname;
+  var list_of_eventposition = [];
+  var list_of_eventstartdate = [];
+  var list_of_eventenddate = [];
+
 
   fn1_geteventparticipated(matricnumber).then((fn1_geteventparticipated_res) => {
     for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
       list_of_eventparticipated.push(fn1_geteventparticipated_res[i]["EVENTNAME"].split('_')[0]);
     }
-    console.log("fn1");
+    for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
+      list_of_eventposition.push(fn1_geteventparticipated_res[i]["EVENTPOSITION"]);
+    }
+    for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
+      list_of_eventstartdate.push(fn1_geteventparticipated_res[i]["EVENTSTARTDATE"]);
+    }
+    for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
+      list_of_eventenddate.push(fn1_geteventparticipated_res[i]["EVENTENDDATE"]);
+    }
+
+
+
+    // console.log("fn1");
     // console.log("fn1", list_of_eventparticipated);
     fn3_getstudentname(matricnumber).then((studentname) => {
-      console.log("fn2");
+      // console.log("fn2");
       fn2_getattributeskill().then((fn2_getattributeskill_res) => {
-        console.log("fn3");
-        console.log(fn2_getattributeskill_res[0]);
+        // console.log("fn3");
+        // console.log(fn2_getattributeskill_res[0]);
         const calculate_skillset = require('./tools/calculate_skillset');
         const result = calculate_skillset(list_of_eventparticipated, fn2_getattributeskill_res[0], fn2_getattributeskill_res[1]);
 
@@ -461,16 +485,22 @@ app.get('/api/skillset', (req, api_res) => {
           matricnumber: matricnumber,
           studenteventlist: {
             dynamic: "y",
-            columns: ["listofeventparticipated"],
+            columns: ["Event", "Event Position", "Event Start Date", "Event End Date"],
             data: []
           },
           radarchartdata: result,
         }
 
         for (let i = 0; i < list_of_eventparticipated.length; i++) {
-          let current_event = { "listofeventparticipated": list_of_eventparticipated[i] };
+          let current_event = {
+            "Events": list_of_eventparticipated[i],
+            "Event Position": list_of_eventposition[i],
+            "Event Start Date": list_of_eventstartdate[i],
+            "Event End Date": list_of_eventenddate[i]
+          };
           studentprofileAPI.studenteventlist.data.push(current_event);
         }
+
 
         api_res.json(studentprofileAPI);
 
@@ -520,7 +550,6 @@ async function fn2_getattributeskill() {
   });
   let attribute_to_skillset = await promise2;
   var result = [event_to_attribute, attribute_to_skillset];
-  console.log(result);
   return result;
 }
 

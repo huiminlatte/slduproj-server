@@ -28,7 +28,7 @@ module.exports = (student_events_participated, event_to_attribute, attribute_to_
       }
     }
   }
-  console.log('list of attribute', list_of_attributes);
+  // console.log('list of attribute', list_of_attributes);
 
   var list_of_skillset = [];
   for (let i = 0; i < list_of_attributes.length; i++) {
