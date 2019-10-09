@@ -129,7 +129,7 @@ var executeQueryShowTable = function (query, res) {
 // 2 - Search students from masterlist 
 
 app.get("/api/search/studentname/", function (req, res) {
-  var studentname = req.query.name; a
+  var studentname = req.query.name;
   var query = "select * from STUDENT_MASTERLIST where STUDENTNAME LIKE '%" + studentname + "%'";
   executeQueryShowTable(query, res);
 });
