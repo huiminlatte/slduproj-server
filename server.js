@@ -158,7 +158,7 @@ app.get("/api/search/eventposition/", function (req, res) {
 app.get("/api/search/eventstartyear/", function (req, res) {
   var eventstartyear = req.query.eventstartyear;
   if (!eventstartyear) {
-    var query = "SELECT * FROM EVENTS" + eventstartyear;
+    var query = "SELECT * FROM EVENTS";
   }
   else {
     var query = "SELECT * FROM EVENTS WHERE YEAR(EVENTSTARTDATE)=" + eventstartyear;
