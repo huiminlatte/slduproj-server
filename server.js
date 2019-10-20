@@ -324,60 +324,64 @@ function importEventData2MySQL(filePath, filename) {
       // console.log("file: ", file);
       // console.log("file_check: ", file_check);
 
+      var sql_settimezone = "SET time_zone = '+08:00'";
+      connection.query(sql_settimezone, (error0, response0) => {
+        if (error0) throw (error0);
+        else console.log(response0);
 
-      // Create table for first time adding event
-      sql_createeventfile = 'CREATE TABLE IF NOT EXISTS EVENTS (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(10) NOT NULL, NTUEMAILADDRESS VARCHAR(255), POSITION VARCHAR(255), STARTDATE DATE, ENDDATE DATE, `EVENT/WORKSHOPNAME` VARCHAR(255), FILENAME VARCHAR(255))';
+        // Create table for first time adding event
+        sql_createeventfile = 'CREATE TABLE IF NOT EXISTS EVENTS (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(10) NOT NULL, NTUEMAILADDRESS VARCHAR(255), POSITION VARCHAR(255), STARTDATE DATE, ENDDATE DATE, `EVENT/WORKSHOPNAME` VARCHAR(255), FILENAME VARCHAR(255))';
 
-      for (var i = 0; i < csvData.length; i++) {
-        csvData[i][4] = moment(csvData[i][4], 'DD/MM/YY').format('YYYY-MM-DD');
-        csvData[i][5] = moment(csvData[i][5], 'DD/MM/YY').format('YYYY-MM-DD');
-        console.log(csvData[i][4], csvData[i][5]);
-      }
-
-
-
-      connection.query(sql_createeventfile, (error, response) => {
-        if (error) throw error;
-        console.log(error || response);
-        let sql_check_eventexists = "SELECT EXISTS(SELECT * FROM EVENTS WHERE FILENAME='" + file_check + "') as RESULT";
-        var data = [];
         for (var i = 0; i < csvData.length; i++) {
-          data.push([csvData[i][0], csvData[i][1], csvData[i][2], csvData[i][3], csvData[i][4], csvData[i][5], csvData[i][6], file]);
+          csvData[i][4] = moment(csvData[i][4], 'DD/MM/YY').format('YYYY-MM-DD');
+          csvData[i][5] = moment(csvData[i][5], 'DD/MM/YY').format('YYYY-MM-DD');
+          console.log(csvData[i][4], csvData[i][5]);
         }
-        console.log(data[34]);
-        connection.query(sql_check_eventexists, data, (error2, response2) => {
-          console.log(response2 || error2);
-          if (!response2[0].RESULT) {
-            let sql_import_eventdata = 'INSERT INTO EVENTS (STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, POSITION, STARTDATE, ENDDATE, `EVENT/WORKSHOPNAME`, FILENAME) VALUES ?';
-            connection.query(sql_import_eventdata, [data], (error3, response3) => {
-              if (error3) throw error3;
-              console.log(error3 || response3);
-              var sql_checkiftableexists = "SELECT 1 FROM " + file + " LIMIT 1";
-              connection.query(sql_checkiftableexists, (err, response) => {
-                if (err) {
-                  var sql_create_eventtable = 'CREATE TABLE IF NOT EXISTS ' + file + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(10) NOT NULL, NTUEMAILADDRESS VARCHAR(255), POSITION VARCHAR(255), STARTDATE DATE, ENDDATE DATE, `EVENT/WORKSHOPNAME` VARCHAR(255));';
-
-                  connection.query(sql_create_eventtable, (error, response) => {
-                    if (error) throw error;
-                    let sql_import_eventdata = 'INSERT INTO ' + file + ' (STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, POSITION, STARTDATE, ENDDATE, `EVENT/WORKSHOPNAME` ) VALUES ?';
-                    connection.query(sql_import_eventdata, [csvData], (error, response) => {
-                      console.log(error || response);
-                    });
-
-                  });
-                } else {
-                  console.log("Table exists");
-                  //TODO: send json to frontend
-                }
-              })
 
 
-            });
+
+        connection.query(sql_createeventfile, (error, response) => {
+          if (error) throw error;
+          console.log(error || response);
+          let sql_check_eventexists = "SELECT EXISTS(SELECT * FROM EVENTS WHERE FILENAME='" + file_check + "') as RESULT";
+          var data = [];
+          for (var i = 0; i < csvData.length; i++) {
+            data.push([csvData[i][0], csvData[i][1], csvData[i][2], csvData[i][3], csvData[i][4], csvData[i][5], csvData[i][6], file]);
           }
+          console.log(data[34]);
+          connection.query(sql_check_eventexists, data, (error2, response2) => {
+            console.log(response2 || error2);
+            if (!response2[0].RESULT) {
+              let sql_import_eventdata = 'INSERT INTO EVENTS (STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, POSITION, STARTDATE, ENDDATE, `EVENT/WORKSHOPNAME`, FILENAME) VALUES ?';
+              connection.query(sql_import_eventdata, [data], (error3, response3) => {
+                if (error3) throw error3;
+                console.log(error3 || response3);
+                var sql_checkiftableexists = "SELECT 1 FROM " + file + " LIMIT 1";
+                connection.query(sql_checkiftableexists, (err, response) => {
+                  if (err) {
+                    var sql_create_eventtable = 'CREATE TABLE IF NOT EXISTS ' + file + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(10) NOT NULL, NTUEMAILADDRESS VARCHAR(255), POSITION VARCHAR(255), STARTDATE DATE, ENDDATE DATE, `EVENT/WORKSHOPNAME` VARCHAR(255));';
+
+                    connection.query(sql_create_eventtable, (error, response) => {
+                      if (error) throw error;
+                      let sql_import_eventdata = 'INSERT INTO ' + file + ' (STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, POSITION, STARTDATE, ENDDATE, `EVENT/WORKSHOPNAME` ) VALUES ?';
+                      connection.query(sql_import_eventdata, [csvData], (error, response) => {
+                        console.log(error || response);
+                      });
+
+                    });
+                  } else {
+                    console.log("Table exists");
+                    //TODO: send json to frontend
+                  }
+                })
 
 
+              });
+            }
+
+
+          });
         });
-
 
       });
 

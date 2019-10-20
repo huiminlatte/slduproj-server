@@ -15,6 +15,13 @@ module.exports = (student_events_participated, event_to_attribute, attribute_to_
     "Innovation": 0,
     "Technical": 0
   }
+  var skillset_distribution = {
+    "Professional development": 0,
+    "Personal development": 0,
+    "Leadership": 0,
+    "Innovation": 0,
+    "Technical": 0
+  }
   var list_of_attributes = [];
 
   for (let i = 0; i < student_events_participated.length; i++) {
@@ -66,30 +73,46 @@ module.exports = (student_events_participated, event_to_attribute, attribute_to_
 
   var max = Math.max(skillset_result['Professional development'], skillset_result['Personal development'],
     skillset_result['Leadership'], skillset_result['Innovation'], skillset_result['Technical']);
+  if (skillset_result['Professional development'] != 0) {
+    skillset_distribution['Professional development'] = parseFloat(skillset_result['Professional development']) / max * 100;
+  }
+  if (skillset_result['Personal development'] != 0) {
+    skillset_distribution['Personal development'] = parseFloat(skillset_result['Personal development']) / max * 100;
+  }
+  if (skillset_result['Leadership'] != 0) {
+    skillset_distribution['Leadership'] = parseFloat(skillset_result['Leadership']) / max * 100;
+  }
+  if (skillset_result["Innovation"] != 0) {
+    skillset_distribution["Innovation"] = parseFloat(skillset_result["Innovation"]) / max * 100;
+  }
+  if (skillset_result["Technical"] != 0) {
+    skillset_distribution["Technical"] = parseFloat(skillset_result["Technical"]) / max * 100;
+  }
+
   var result = [
     {
       skillset: 'Professional development',
-      IndividualScore: parseFloat(skillset_result['Professional development']) / max * 100,
+      IndividualScore: skillset_distribution['Professional development'],
       max: max
     },
     {
       skillset: 'Personal development',
-      IndividualScore: parseFloat(skillset_result['Personal development']) / max * 100,
+      IndividualScore: skillset_distribution['Personal development'],
       max: max
     },
     {
       skillset: 'Leadership',
-      IndividualScore: parseFloat(skillset_result['Leadership']) / max * 100,
+      IndividualScore: skillset_distribution['Leadership'],
       max: max
     },
     {
       skillset: 'Innovation',
-      IndividualScore: parseFloat(skillset_result['Innovation']) / max * 100,
+      IndividualScore: skillset_distribution['Innovation'],
       max: max
     },
     {
       skillset: 'Technical',
-      IndividualScore: parseFloat(skillset_result['Technical']) / max * 100,
+      IndividualScore: skillset_distribution['Technical'],
       max: max
     },
   ];
