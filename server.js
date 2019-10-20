@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const express = require('express');
 const app = express();
+const moment = require('moment');
 cors = require('cors'), app.use(cors());
 app.use(bodyParser.json());
 global.__basedir = __dirname;
@@ -161,7 +162,7 @@ app.get("/api/search/eventstartyear/", function (req, res) {
     var query = "SELECT * FROM EVENTS";
   }
   else {
-    var query = "SELECT * FROM EVENTS WHERE YEAR(EVENTSTARTDATE)=" + eventstartyear;
+    var query = "SELECT * FROM EVENTS WHERE YEAR(STARTDATE)=" + eventstartyear;
 
   }
   executeQueryShowTable(query, res);
@@ -173,7 +174,7 @@ app.get("/api/search/eventendyear/", function (req, res) {
     var query = "SELECT * FROM EVENTS";
   }
   else {
-    var query = "SELECT * FROM EVENTS WHERE YEAR(EVENTENDDATE)=" + eventendyear;
+    var query = "SELECT * FROM EVENTS WHERE YEAR(ENDDATE)=" + eventendyear;
 
   }
   executeQueryShowTable(query, res);
@@ -249,20 +250,43 @@ app.put("/api/droptables", function (req, res) {
   var tablename = req.query.tablename;
   var apiResult = {};
   var query = "DROP TABLE " + tablename; //Not unique Matric Number
-  connection.query(query, function (err, result) {
-    if (err) {
-      apiResult = {
-        "success": "no",
-        "data": err,
+  var eventsdrop_query = "DELETE FROM EVENTS WHERE FILENAME='" + tablename + "';";
+  try {
+    connection.query(query, function (err, result) {
+
+      try {
+        connection.query(eventsdrop_query, function (err2, result2) {
+          if (result2.affectedRows != 0) {
+            apiResult = {
+              "success": "yes",
+              "data": tablename,
+            }
+
+          }
+          else {
+            apiResult = {
+              "success": "no",
+              "data": tablename,
+            }
+
+          }
+          res.json(apiResult);
+
+
+
+        })
       }
-    } else {
-      apiResult = {
-        "success": "yes",
-        "data": tablename
+      catch (err2) {
+        res.send(err2);
       }
-    }
-    res.json(apiResult);
-  })
+
+    });
+
+  }
+  catch (err) {
+    res.send(err);
+  }
+
 });
 
 // -> Import Event CSV File to MySQL database
@@ -283,33 +307,46 @@ function importEventData2MySQL(filePath, filename) {
 
       //var eventname = csvData[0][4].replace(/\s/g, '');
       var file = filename.replace(/\.[^/.]+$/, "").replace(/\s/g, '');
-      // 
+      var file_check = filename.replace(/\.[^/.]+$/, "");
+      // console.log("file: ", file);
+      // console.log("file_check: ", file_check);
+
 
       // Create table for first time adding event
-      sql_createeventfile = 'CREATE TABLE IF NOT EXISTS EVENTS (TIMESTAMP VARCHAR(255), STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255), EVENTNAME VARCHAR(255), EVENTPOSITION VARCHAR(255), EVENTPOSITIONTIER INT, EVENTSTARTDATE DATE, EVENTENDDATE DATE)';
+      sql_createeventfile = 'CREATE TABLE IF NOT EXISTS EVENTS (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(10) NOT NULL, NTUEMAILADDRESS VARCHAR(255), POSITION VARCHAR(255), STARTDATE DATE, ENDDATE DATE, `EVENT/WORKSHOPNAME` VARCHAR(255), FILENAME VARCHAR(255))';
+
+      for (var i = 0; i < csvData.length; i++) {
+        csvData[i][4] = moment(csvData[i][4], 'DD/MM/YYYY').format('YYYY-MM-DD');
+        csvData[i][5] = moment(csvData[i][5], 'DD/MM/YYYY').format('YYYY-MM-DD');
+        console.log(csvData[i][4], csvData[i][5]);
+      }
+
+
+
       connection.query(sql_createeventfile, (error, response) => {
         if (error) throw error;
         console.log(error || response);
-        let sql_check_eventexists = "SELECT EXISTS(SELECT * FROM EVENTS WHERE EVENTNAME='" + file + "') as RESULT";
-        connection.query(sql_check_eventexists, (error2, response2) => {
+        let sql_check_eventexists = "SELECT EXISTS(SELECT * FROM EVENTS WHERE FILENAME='" + file_check + "') as RESULT";
+        var data = [];
+        for (var i = 0; i < csvData.length; i++) {
+          data.push([csvData[i][0], csvData[i][1], csvData[i][2], csvData[i][3], csvData[i][4], csvData[i][5], csvData[i][6], file]);
+        }
+        console.log(data[34]);
+        connection.query(sql_check_eventexists, data, (error2, response2) => {
           console.log(response2 || error2);
-          // if (!response2[0].RESULT) {
           if (!response2[0].RESULT) {
-            // console.log(response);
-
-            let sql_import_eventdata = 'INSERT INTO EVENTS (TIMESTAMP, STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, EVENTNAME, EVENTPOSITION, EVENTPOSITIONTIER, EVENTSTARTDATE, EVENTENDDATE) VALUES ?';
-            // TODO: match csvData to the mysql columns (dynamic)
-            connection.query(sql_import_eventdata, [csvData], (error3, response3) => {
+            let sql_import_eventdata = 'INSERT INTO EVENTS (STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, POSITION, STARTDATE, ENDDATE, `EVENT/WORKSHOPNAME`, FILENAME) VALUES ?';
+            connection.query(sql_import_eventdata, [data], (error3, response3) => {
               if (error3) throw error3;
               console.log(error3 || response3);
               var sql_checkiftableexists = "SELECT 1 FROM " + file + " LIMIT 1";
               connection.query(sql_checkiftableexists, (err, response) => {
                 if (err) {
-                  var sql_create_eventtable = 'CREATE TABLE IF NOT EXISTS ' + file + ' (TIMESTAMP VARCHAR(255), STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, EVENTNAME VARCHAR(255), EVENTPOSITION VARCHAR(255), EVENTPOSITIONTIER INT, EVENTSTARTDATE VARCHAR(255), EVENTENDDATE VARCHAR(255), PRIMARY KEY (MATRICNUMBER))';
+                  var sql_create_eventtable = 'CREATE TABLE IF NOT EXISTS ' + file + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(10) NOT NULL, NTUEMAILADDRESS VARCHAR(255), POSITION VARCHAR(255), STARTDATE DATE, ENDDATE DATE, `EVENT/WORKSHOPNAME` VARCHAR(255));';
 
                   connection.query(sql_create_eventtable, (error, response) => {
                     if (error) throw error;
-                    let sql_import_eventdata = 'INSERT INTO ' + file + ' (TIMESTAMP, STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, EVENTNAME, EVENTPOSITION, EVENTPOSITIONTIER, EVENTSTARTDATE, EVENTENDDATE) VALUES ?';
+                    let sql_import_eventdata = 'INSERT INTO ' + file + ' (STUDENTNAME, MATRICNUMBER, NTUEMAILADDRESS, POSITION, STARTDATE, ENDDATE, `EVENT/WORKSHOPNAME` ) VALUES ?';
                     connection.query(sql_import_eventdata, [csvData], (error, response) => {
                       console.log(error || response);
                     });
@@ -326,14 +363,14 @@ function importEventData2MySQL(filePath, filename) {
           }
 
 
-        })
+        });
 
 
-      })
+      });
 
       //   delete file after saving to MySQL database
       //   -> you can comment the statement to see the uploaded CSV file.
-      fs.unlinkSync(filePath)
+      fs.unlinkSync(filePath);
     });
 
   stream.pipe(csvStream);
@@ -358,6 +395,7 @@ function importStudentData2MySQL(filePath) {
         console.log(error || response);
       })
       let sql_import_studentdata = 'INSERT INTO STUDENT_MASTERLIST (studentname, matricnumber, ntuemailaddress) SELECT * FROM (SELECT ?, ?, ?) AS tmp WHERE NOT EXISTS (SELECT matricnumber FROM STUDENT_MASTERLIST WHERE matricnumber = ? ) LIMIT 1;';
+
       for (var i = 0; i < csvData.length; i++) {
         connection.query(sql_import_studentdata, [csvData[i][0], csvData[i][1], csvData[i][2], csvData[i][1]], (error, response) => {
           console.log(error || response);
@@ -372,11 +410,15 @@ function importStudentData2MySQL(filePath) {
       var sql_create_active_student_masterlist = 'CREATE TABLE IF NOT EXISTS ' + 'ACTIVESTUDENTMASTERLIST' + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, PRIMARY KEY (MATRICNUMBER))';
       connection.query(sql_create_active_student_masterlist, (error, response) => {
         console.log(error || response);
-      })
-      let sql_importactivestudentmasterlist = 'INSERT INTO ACTIVESTUDENTMASTERLIST (studentname, matricnumber, ntuemailaddress) VALUES ? ';
-      connection.query(sql_importactivestudentmasterlist, [csvData], (error, response) => {
-        console.log(error || response);
       });
+
+      let sql_importactivestudentmasterlist = 'INSERT INTO ACTIVESTUDENTMASTERLIST (studentname, matricnumber, ntuemailaddress) SELECT * FROM (SELECT ?, ?, ?) AS tmp WHERE NOT EXISTS (SELECT matricnumber FROM ACTIVESTUDENTMASTERLIST WHERE matricnumber = ? ) LIMIT 1;';
+      for (var i = 0; i < csvData.length; i++) {
+        connection.query(sql_importactivestudentmasterlist, [csvData[i][0], csvData[i][1], csvData[i][2], csvData[i][1]], (error, response) => {
+          console.log(error || response);
+        });
+      }
+
 
       // delete file after saving to MySQL database
       // -> you can comment the statement to see the uploaded CSV file.
@@ -457,16 +499,16 @@ app.get('/api/skillset', (req, api_res) => {
 
   fn1_geteventparticipated(matricnumber).then((fn1_geteventparticipated_res) => {
     for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
-      list_of_eventparticipated.push(fn1_geteventparticipated_res[i]["EVENTNAME"].split('_')[0]);
+      list_of_eventparticipated.push(fn1_geteventparticipated_res[i]["EVENT/WORKSHOPNAME"]);
     }
     for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
-      list_of_eventposition.push(fn1_geteventparticipated_res[i]["EVENTPOSITION"]);
+      list_of_eventposition.push(fn1_geteventparticipated_res[i]["POSITION"]);
     }
     for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
-      list_of_eventstartdate.push(fn1_geteventparticipated_res[i]["EVENTSTARTDATE"]);
+      list_of_eventstartdate.push(moment(fn1_geteventparticipated_res[i]["STARTDATE"]).format("DD/MM/YYYY"));
     }
     for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
-      list_of_eventenddate.push(fn1_geteventparticipated_res[i]["EVENTENDDATE"]);
+      list_of_eventenddate.push(moment(fn1_geteventparticipated_res[i]["ENDDATE"]).format("DD/MM/YYYY"));
     }
 
 
