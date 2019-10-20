@@ -104,15 +104,22 @@ var executeQueryShowTable = function (query, res) {
   console.log("Query", query);
   connection.query(query, function (err, response) {
     try {
-      var apiResult = {};
-      for (var i = 0; i < response[0].length; i++) {
-        if (response[0][i] == 'STARTDATE' || esponse[0][i] == 'ENDDATE') {
-          for (var j = 1; j < response.length[0]; j++) {
-            response[i][j] = moment(response[i][j]).format("DD/MM/YYYY");
-          }
-        }
-      }
+      // console.log(Object.keys(response[0])[0]);
+      // for (var i = 0; i < Object.keys(response[0]).length; i++) {
 
+      //   if (Object.keys(response[0])[i] == 'STARTDATE') {
+      //     console.log(i);
+      //     for (var j = 1; j < response.length; j++) {
+      //       response[j][i] = moment(response[j][i]).format("DD/MM/YYYY");
+      //       console.log(response[]);
+
+      //     }
+      //   }
+      // }
+
+
+
+      var apiResult = {};
       apiResult = {
         // TODO: "status": "found"
         "dynamic": "y",
@@ -218,24 +225,18 @@ app.get("/api/uploadedfiles", function (req, res) {
 app.get("/api/events", function (req, res) {
   var eventname = req.query.eventname;
   var sortstudentname = req.query.sortstudentname;
-  var sortpositiontier = req.query.sortpositiontier;
 
   //console.log("eventname: ", eventname);
   if (eventname) {
     var query = "SELECT * FROM " + eventname;
     if (sortstudentname) {
       query = query + " ORDER BY STUDENTNAME";
-      if (sortpositiontier) {
-        query = query + ", EVENTPOSITIONTIER";
-      }
-    } else if (sortpositiontier) {
-      query = query + " ORDER BY EVENTPOSITIONTIER";
     }
 
     executeQueryShowTable(query, res);
 
   } else {
-    var query = "SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME IN ('EVENTNAME') AND TABLE_SCHEMA='mydb'";
+    var query = "SELECT DISTINCT FILENAME FROM EVENTS";
     executeQuery(query, res);
   }
 });
