@@ -97,6 +97,28 @@ var executeQuery = function (query, res) {
     }
   });
 }
+function convertDateFormat(response) {
+  for (var i = 0; i < Object.keys(response[0]).length; i++) {
+    // console.log(Object.keys(response[0])[i]);
+    if (Object.keys(response[0])[i] == 'STARTDATE') {
+      // console.log(i);
+      for (var j = 0; j < response.length; j++) {
+        response[j].STARTDATE = moment(response[1].STARTDATE, 'YYYY-MM-DD').format("DD/MM/YYYY");
+        // console.log(moment(response[j].STARTDATE).format("DD/MM/YYYY"));
+      }
+    }
+  }
+  for (var i = 0; i < Object.keys(response[0]).length; i++) {
+    if (Object.keys(response[0])[i] == 'ENDDATE') {
+      // console.log(i);
+      for (var j = 0; j < response.length; j++) {
+        response[j].ENDDATE = moment(response[j].ENDDATE, 'YYYY-MM-DD').format("DD/MM/YYYY");
+      }
+    }
+  }
+  // console.log(response[1]);
+  return response;
+}
 
 var executeQueryShowTable = function (query, res) {
   //var request = new connection.Request();
@@ -104,40 +126,23 @@ var executeQueryShowTable = function (query, res) {
   console.log("Query", query);
   connection.query(query, function (err, response) {
     try {
-      // console.log(Object.keys(response[0])[0]);
-      // for (var i = 0; i < Object.keys(response[0]).length; i++) {
-
-      //   if (Object.keys(response[0])[i] == 'STARTDATE') {
-      //     console.log(i);
-      //     for (var j = 1; j < response.length; j++) {
-      //       response[j][i] = moment(response[j][i]).format("DD/MM/YYYY");
-      //       console.log(response[]);
-
-      //     }
-      //   }
-      // }
-
-
-
+      var response2 = convertDateFormat(response);
       var apiResult = {};
       apiResult = {
         // TODO: "status": "found"
         "dynamic": "y",
-        "columns": Object.keys(response[0]),
-        "data": response
+        "columns": Object.keys(response2[0]),
+        "data": response2
       }
-
+      console.log(response2[1].STARTDATE);
       res.json(apiResult);
-
     }
     catch (err) {
-
       res.send(err);
     }
-
-
   });
 }
+
 
 // 2 - Search students from masterlist 
 
