@@ -134,7 +134,6 @@ var executeQueryShowTable = function (query, res) {
         "columns": Object.keys(response2[0]),
         "data": response2
       }
-      console.log(response2[1].STARTDATE);
       res.json(apiResult);
     }
     catch (err) {
