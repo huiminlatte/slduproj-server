@@ -105,6 +105,14 @@ var executeQueryShowTable = function (query, res) {
   connection.query(query, function (err, response) {
     try {
       var apiResult = {};
+      for (var i = 0; i < response[0].length; i++) {
+        if (response[0][i] == 'STARTDATE' || esponse[0][i] == 'ENDDATE') {
+          for (var j = 1; j < response.length[0]; j++) {
+            response[i][j] = moment(response[i][j]).format("DD/MM/YYYY");
+          }
+        }
+      }
+
       apiResult = {
         // TODO: "status": "found"
         "dynamic": "y",
@@ -146,13 +154,13 @@ app.get("/api/search/ntuemailaddress/", function (req, res) {
 
 app.get("/api/search/event/", function (req, res) {
   var eventname = req.query.eventname;
-  var query = "select * from EVENTS where EVENTNAME LIKE '%" + eventname + "%'";
+  var query = "select * from EVENTS where `EVENT/WORKSHOPNAME` LIKE '%" + eventname + "%'";
   executeQueryShowTable(query, res);
 });
 
 app.get("/api/search/eventposition/", function (req, res) {
   var eventposition = req.query.eventposition;
-  var query = "select * from EVENTS where EVENTPOSITION LIKE '%" + eventposition + "%'";
+  var query = "select * from EVENTS where POSITION LIKE '%" + eventposition + "%'";
   executeQueryShowTable(query, res);
 });
 
