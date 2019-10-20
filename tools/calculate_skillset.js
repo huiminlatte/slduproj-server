@@ -66,31 +66,30 @@ module.exports = (student_events_participated, event_to_attribute, attribute_to_
 
   var max = Math.max(skillset_result['Professional development'], skillset_result['Personal development'],
     skillset_result['Leadership'], skillset_result['Innovation'], skillset_result['Technical']);
-
   var result = [
     {
       skillset: 'Professional development',
-      IndividualScore: skillset_result['Professional development'],
+      IndividualScore: parseFloat(skillset_result['Professional development']) / max * 100,
       max: max
     },
     {
       skillset: 'Personal development',
-      IndividualScore: skillset_result['Personal development'],
+      IndividualScore: parseFloat(skillset_result['Personal development']) / max * 100,
       max: max
     },
     {
       skillset: 'Leadership',
-      IndividualScore: skillset_result['Leadership'],
+      IndividualScore: parseFloat(skillset_result['Leadership']) / max * 100,
       max: max
     },
     {
       skillset: 'Innovation',
-      IndividualScore: skillset_result['Innovation'],
+      IndividualScore: parseFloat(skillset_result['Innovation']) / max * 100,
       max: max
     },
     {
       skillset: 'Technical',
-      IndividualScore: skillset_result['Technical'],
+      IndividualScore: parseFloat(skillset_result['Technical']) / max * 100,
       max: max
     },
   ];
