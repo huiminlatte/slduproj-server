@@ -103,7 +103,7 @@ function convertDateFormat(response) {
     if (Object.keys(response[0])[i] == 'STARTDATE') {
       // console.log(i);
       for (var j = 0; j < response.length; j++) {
-        response[j].STARTDATE = moment(response[1].STARTDATE, 'YYYY-MM-DD').format("DD/MM/YYYY");
+        response[j].STARTDATE = moment(response[j].STARTDATE, 'YYYY-MM-DD').format("DD/MM/YYYY");
         // console.log(moment(response[j].STARTDATE).format("DD/MM/YYYY"));
       }
     }
@@ -330,8 +330,8 @@ function importEventData2MySQL(filePath, filename) {
       sql_createeventfile = 'CREATE TABLE IF NOT EXISTS EVENTS (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(10) NOT NULL, NTUEMAILADDRESS VARCHAR(255), POSITION VARCHAR(255), STARTDATE DATE, ENDDATE DATE, `EVENT/WORKSHOPNAME` VARCHAR(255), FILENAME VARCHAR(255))';
 
       for (var i = 0; i < csvData.length; i++) {
-        csvData[i][4] = moment(csvData[i][4], 'DD/MM/YYYY').format('YYYY-MM-DD');
-        csvData[i][5] = moment(csvData[i][5], 'DD/MM/YYYY').format('YYYY-MM-DD');
+        csvData[i][4] = moment(csvData[i][4], 'DD/MM/YY').format('YYYY-MM-DD');
+        csvData[i][5] = moment(csvData[i][5], 'DD/MM/YY').format('YYYY-MM-DD');
         console.log(csvData[i][4], csvData[i][5]);
       }
 
