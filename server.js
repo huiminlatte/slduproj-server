@@ -641,7 +641,7 @@ async function fn2_getattributeskill() {
 
   let promise1 = new Promise((resolve, reject) => {
     connection.query(query_event2attr, (err, response) => {
-      if (err) throw err;
+      if (err) reject(err);
       //res.json(response);
       resolve(response);
     })
@@ -653,7 +653,7 @@ async function fn2_getattributeskill() {
     // 3rd object
     query_attr2skill = "SELECT ATTRIBUTE, SKILLSET1, SKILLSET2, SKILLSET3 FROM ATTRIBUTE2SKILLSET";
     connection.query(query_attr2skill, (err, response) => {
-      if (err) throw err;
+      if (err) reject(err);
       resolve(response);
     });
   });
@@ -667,7 +667,7 @@ async function fn3_getstudentname(matricnumber) {
 
   let promise = new Promise((resolve, reject) => {
     connection.query(query_studentname, (err, response) => {
-      if (err) throw err;
+      if (err) reject(err);
       resolve(response);
     });
   });
