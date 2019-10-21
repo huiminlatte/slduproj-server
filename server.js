@@ -559,6 +559,76 @@ function importEventAttriData2MySQL(filePath) {
 
 app.get('/api/skillset', (req, api_res) => {
   var matricnumber = req.query.matricnumber;
+  // var given_studentname = req.query.studentname;
+  // var given_ntuemailaddress = req.query.ntuemailaddress;
+  // console.log(given_studentname, given_ntuemailaddress);
+
+
+  var list_of_eventparticipated = [];
+  var list_of_eventposition = [];
+  var list_of_eventstartdate = [];
+  var list_of_eventenddate = [];
+
+
+  fn1_geteventparticipated(matricnumber).then((fn1_geteventparticipated_res) => {
+    for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
+      list_of_eventparticipated.push(fn1_geteventparticipated_res[i]["EVENT/WORKSHOPNAME"]);
+    }
+    for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
+      list_of_eventposition.push(fn1_geteventparticipated_res[i]["POSITION"]);
+    }
+    for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
+      list_of_eventstartdate.push(moment(fn1_geteventparticipated_res[i]["STARTDATE"]).format("DD/MM/YYYY"));
+    }
+    for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
+      list_of_eventenddate.push(moment(fn1_geteventparticipated_res[i]["ENDDATE"]).format("DD/MM/YYYY"));
+    }
+    fn3_getstudentname(matricnumber).then((studentname) => {
+      // console.log("fn2");
+      fn2_getattributeskill().then((fn2_getattributeskill_res) => {
+        // console.log("fn3");
+        // console.log(fn2_getattributeskill_res[0]);
+        const calculate_skillset = require('./tools/calculate_skillset');
+        const result = calculate_skillset(list_of_eventparticipated, fn2_getattributeskill_res[0], fn2_getattributeskill_res[1]);
+
+        // var studentprofileAPI = {};
+        // if (studentname[0].studentname.toLowerCase().replace(/\s/g, '') == given_studentname.toLowerCase().replace(/\s/g, '') && studentname[0].ntuemailaddress.toLowerCase().replace(/\s/g, '') == given_ntuemailaddress.toLowerCase().replace(/\s/g, '')) {
+        const studentprofileAPI = {
+          studentname: studentname[0].studentname,
+          matricnumber: matricnumber,
+          studenteventlist: {
+            dynamic: "y",
+            columns: ["Events", "Event Position", "Event Start Date", "Event End Date"],
+            data: []
+          },
+          radarchartdata: result,
+        }
+        for (let i = 0; i < list_of_eventparticipated.length; i++) {
+          let current_event = {
+            "Events": list_of_eventparticipated[i],
+            "Event Position": list_of_eventposition[i],
+            "Event Start Date": list_of_eventstartdate[i],
+            "Event End Date": list_of_eventenddate[i]
+          };
+          studentprofileAPI.studenteventlist.data.push(current_event);
+        }
+
+
+
+
+
+
+
+
+        api_res.json(studentprofileAPI);
+
+      }).catch(error => console.log("fn2_getattributeskill error", error));
+    }).catch(error => console.log("fn3_getstudentname error", error));
+  }).catch(error => console.log("fn1_find_all_events error", error))
+})
+
+app.get('/api/withauth/skillset/', (req, api_res) => {
+  var matricnumber = req.query.matricnumber;
   var given_studentname = req.query.studentname;
   var given_ntuemailaddress = req.query.ntuemailaddress;
   console.log(given_studentname, given_ntuemailaddress);
@@ -832,7 +902,7 @@ app.get('/api/compare_absentees2events', (req, res) => {
 
 
 // Create a Server
-let server = app.listen(8002, function () {
+let server = app.listen(8080, function () {
 
   let host = server.address().address
   let port = server.address().port
