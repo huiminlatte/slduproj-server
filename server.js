@@ -64,6 +64,13 @@ app.post('/api/uploadstudentmasterlist', upload.single("uploadfile"), (req, res)
   });
 });
 
+app.post('/api/uploadactivestudentlist', upload.single("uploadfile"), (req, res) => {
+  importActiveStudentData2MySQL(__basedir + '/uploads/' + req.file.filename);
+  res.json({
+    'msg': 'File uploaded/import successfully!',
+    'file': req.file
+  });
+});
 
 
 app.post('/api/uploadattribute2skillset', upload.single("uploadfile"), (req, res) => {
@@ -419,22 +426,60 @@ function importStudentData2MySQL(filePath) {
         });
       }
 
-      var sql_dropexistingstudentmasterlist = "DROP TABLE IF EXISTS ACTIVESTUDENTMASTERLIST";
+      // var sql_dropexistingstudentmasterlist = "DROP TABLE IF EXISTS ACTIVESTUDENTMASTERLIST";
+      // connection.query(sql_dropexistingstudentmasterlist, (error, response) => {
+      //   console.log(error || response);
+      // })
+
+      // var sql_create_active_student_masterlist = 'CREATE TABLE IF NOT EXISTS ' + 'ACTIVESTUDENTMASTERLIST' + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, PRIMARY KEY (MATRICNUMBER))';
+      // connection.query(sql_create_active_student_masterlist, (error, response) => {
+      //   console.log(error || response);
+      // });
+
+      // let sql_importactivestudentmasterlist = 'INSERT INTO ACTIVESTUDENTMASTERLIST (studentname, matricnumber, ntuemailaddress) SELECT * FROM (SELECT ?, ?, ?) AS tmp WHERE NOT EXISTS (SELECT matricnumber FROM ACTIVESTUDENTMASTERLIST WHERE matricnumber = ? ) LIMIT 1;';
+      // for (var i = 0; i < csvData.length; i++) {
+      //   connection.query(sql_importactivestudentmasterlist, [csvData[i][0], csvData[i][1], csvData[i][2], csvData[i][1]], (error, response) => {
+      //     console.log(error || response);
+      //   });
+      // }
+
+
+      // delete file after saving to MySQL database
+      // -> you can comment the statement to see the uploaded CSV file.
+      fs.unlinkSync(filePath)
+    });
+  stream.pipe(csvStream);
+}
+
+function importActiveStudentData2MySQL(filePath) {
+  let stream = fs.createReadStream(filePath);
+  let csvData = [];
+  let csvStream = csv
+    .parse()
+    .on("data", function (data) {
+      csvData.push(data);
+    })
+    .on("end", function () {
+      // Remove Header ROW
+      csvData.shift();
+
+      var sql_dropexistingstudentmasterlist = "DROP TABLE IF EXISTS ACTIVESTUDENTLIST";
       connection.query(sql_dropexistingstudentmasterlist, (error, response) => {
         console.log(error || response);
       })
 
-      var sql_create_active_student_masterlist = 'CREATE TABLE IF NOT EXISTS ' + 'ACTIVESTUDENTMASTERLIST' + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, PRIMARY KEY (MATRICNUMBER))';
-      connection.query(sql_create_active_student_masterlist, (error, response) => {
+      var sql_create_student_masterlist = 'CREATE TABLE IF NOT EXISTS ' + 'ACTIVESTUDENTLIST' + ' (STUDENTNAME VARCHAR(255) NOT NULL, MATRICNUMBER VARCHAR(9) NOT NULL, NTUEMAILADDRESS VARCHAR(255) UNIQUE, PRIMARY KEY (MATRICNUMBER))';
+      connection.query(sql_create_student_masterlist, (error, response) => {
         console.log(error || response);
-      });
+      })
+      let sql_import_studentdata = 'INSERT INTO ACTIVESTUDENTLIST (studentname, matricnumber, ntuemailaddress) SELECT * FROM (SELECT ?, ?, ?) AS tmp WHERE NOT EXISTS (SELECT matricnumber FROM ACTIVESTUDENTLIST WHERE matricnumber = ? ) LIMIT 1;';
 
-      let sql_importactivestudentmasterlist = 'INSERT INTO ACTIVESTUDENTMASTERLIST (studentname, matricnumber, ntuemailaddress) SELECT * FROM (SELECT ?, ?, ?) AS tmp WHERE NOT EXISTS (SELECT matricnumber FROM ACTIVESTUDENTMASTERLIST WHERE matricnumber = ? ) LIMIT 1;';
       for (var i = 0; i < csvData.length; i++) {
-        connection.query(sql_importactivestudentmasterlist, [csvData[i][0], csvData[i][1], csvData[i][2], csvData[i][1]], (error, response) => {
+        connection.query(sql_import_studentdata, [csvData[i][0], csvData[i][1], csvData[i][2], csvData[i][1]], (error, response) => {
           console.log(error || response);
         });
       }
+
 
 
       // delete file after saving to MySQL database
@@ -508,6 +553,10 @@ function importEventAttriData2MySQL(filePath) {
 
 app.get('/api/skillset', (req, api_res) => {
   var matricnumber = req.query.matricnumber;
+  // var studentname = req.query.studentname;
+  // var ntuemailaddress = req.query.ntuemailaddress;
+
+
   var list_of_eventparticipated = [];
   var list_of_eventposition = [];
   var list_of_eventstartdate = [];
@@ -689,7 +738,7 @@ app.post('/api/commonabsentees', (req, res) => {
   for (var i = 1; i < event_list.length; i++) {
     sql_allparticipants = sql_allparticipants + " UNION SELECT MATRICNUMBER FROM " + event_list[i];
   }
-  var sql_commonabsentees = "SELECT STUDENT_MASTERLIST.MATRICNUMBER, STUDENT_MASTERLIST.STUDENTNAME FROM STUDENT_MASTERLIST LEFT JOIN ALL_PARTICIPANTS ON STUDENT_MASTERLIST.MATRICNUMBER=ALL_PARTICIPANTS.MATRICNUMBER WHERE ALL_PARTICIPANTS.MATRICNUMBER IS NULL;"
+  var sql_commonabsentees = "SELECT ACTIVESTUDENTLIST.MATRICNUMBER, ACTIVESTUDENTLIST.STUDENTNAME FROM ACTIVESTUDENTLIST LEFT JOIN ALL_PARTICIPANTS ON ACTIVESTUDENTLIST.MATRICNUMBER=ALL_PARTICIPANTS.MATRICNUMBER WHERE ACTIVESTUDENTLIST.MATRICNUMBER IS NULL;";
 
   console.log(sql_droptable);
   connection.query(sql_droptable, function (err, response) {
