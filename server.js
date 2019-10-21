@@ -553,8 +553,8 @@ function importEventAttriData2MySQL(filePath) {
 
 app.get('/api/skillset', (req, api_res) => {
   var matricnumber = req.query.matricnumber;
-  // var studentname = req.query.studentname;
-  // var ntuemailaddress = req.query.ntuemailaddress;
+  // var given_studentname = req.query.studentname;
+  // var given_ntuemailaddress = req.query.ntuemailaddress;
 
 
   var list_of_eventparticipated = [];
@@ -576,11 +576,6 @@ app.get('/api/skillset', (req, api_res) => {
     for (var i = 0; i < fn1_geteventparticipated_res.length; i++) {
       list_of_eventenddate.push(moment(fn1_geteventparticipated_res[i]["ENDDATE"]).format("DD/MM/YYYY"));
     }
-
-
-
-    // console.log("fn1");
-    // console.log("fn1", list_of_eventparticipated);
     fn3_getstudentname(matricnumber).then((studentname) => {
       // console.log("fn2");
       fn2_getattributeskill().then((fn2_getattributeskill_res) => {
@@ -738,31 +733,28 @@ app.post('/api/commonabsentees', (req, res) => {
   for (var i = 1; i < event_list.length; i++) {
     sql_allparticipants = sql_allparticipants + " UNION SELECT MATRICNUMBER FROM " + event_list[i];
   }
-  var sql_commonabsentees = "SELECT ACTIVESTUDENTLIST.MATRICNUMBER, ACTIVESTUDENTLIST.STUDENTNAME FROM ACTIVESTUDENTLIST LEFT JOIN ALL_PARTICIPANTS ON ACTIVESTUDENTLIST.MATRICNUMBER=ALL_PARTICIPANTS.MATRICNUMBER WHERE ACTIVESTUDENTLIST.MATRICNUMBER IS NULL;";
+  var sql_commonabsentees = "SELECT ACTIVESTUDENTLIST.MATRICNUMBER, ACTIVESTUDENTLIST.STUDENTNAME FROM ACTIVESTUDENTLIST LEFT JOIN ALL_PARTICIPANTS ON ACTIVESTUDENTLIST.MATRICNUMBER=ALL_PARTICIPANTS.MATRICNUMBER WHERE ALL_PARTICIPANTS.MATRICNUMBER IS NULL";
 
-  console.log(sql_droptable);
   connection.query(sql_droptable, function (err, response) {
+    console.log(sql_droptable, err || response);
     if (err) {
       res.send(err);
-
     } else {
-      // console.log(sql_droptable);
-      // console.log(response);
       connection.query(sql_allparticipants, function (err2, response2) {
+        console.log(sql_allparticipants, err2 || response2);
+
         if (err2) {
           res.send(err2);
         }
         else {
-          // console.log(sql_allparticipants);
-          // console.log(response2);
           connection.query(sql_commonabsentees, function (err3, response3) {
+            console.log(sql_commonabsentees, err3 || response3);
             if (err3) {
               res.send(err3);
             }
             else {
-              console.log(sql_commonabsentees);
-              console.log(response3);
               connection.query(sql_droptable, function (err4, response4) {
+                console.log(sql_droptable, err4 || response4);
                 if (err4) {
                   res.send(err4);
                 }
@@ -821,7 +813,7 @@ app.get('/api/compare_absentees2events', (req, res) => {
 
 
 // Create a Server
-let server = app.listen(8002, function () {
+let server = app.listen(8080, function () {
 
   let host = server.address().address
   let port = server.address().port
