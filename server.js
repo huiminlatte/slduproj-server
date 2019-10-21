@@ -561,6 +561,7 @@ app.get('/api/skillset', (req, api_res) => {
   var matricnumber = req.query.matricnumber;
   var given_studentname = req.query.studentname;
   var given_ntuemailaddress = req.query.ntuemailaddress;
+  console.log(given_studentname, given_ntuemailaddress);
 
 
   var list_of_eventparticipated = [];
@@ -590,26 +591,38 @@ app.get('/api/skillset', (req, api_res) => {
         const calculate_skillset = require('./tools/calculate_skillset');
         const result = calculate_skillset(list_of_eventparticipated, fn2_getattributeskill_res[0], fn2_getattributeskill_res[1]);
 
-        const studentprofileAPI = {
-          studentname: studentname[0].studentname,
-          matricnumber: matricnumber,
-          studenteventlist: {
-            dynamic: "y",
-            columns: ["Events", "Event Position", "Event Start Date", "Event End Date"],
-            data: []
-          },
-          radarchartdata: result,
+        var studentprofileAPI = {};
+        if (studentname[0].studentname.toLowerCase().replace(/\s/g, '') == given_studentname.toLowerCase().replace(/\s/g, '') && studentname[0].ntuemailaddress.toLowerCase().replace(/\s/g, '') == given_ntuemailaddress.toLowerCase().replace(/\s/g, '')) {
+          studentprofileAPI = {
+            studentname: studentname[0].studentname,
+            matricnumber: matricnumber,
+            studenteventlist: {
+              dynamic: "y",
+              columns: ["Events", "Event Position", "Event Start Date", "Event End Date"],
+              data: []
+            },
+            radarchartdata: result,
+          }
+          for (let i = 0; i < list_of_eventparticipated.length; i++) {
+            let current_event = {
+              "Events": list_of_eventparticipated[i],
+              "Event Position": list_of_eventposition[i],
+              "Event Start Date": list_of_eventstartdate[i],
+              "Event End Date": list_of_eventenddate[i]
+            };
+            studentprofileAPI.studenteventlist.data.push(current_event);
+          }
+        }
+        else {
+          studentprofileAPI = {
+            "message": "You're not authenticated.",
+
+          }
         }
 
-        for (let i = 0; i < list_of_eventparticipated.length; i++) {
-          let current_event = {
-            "Events": list_of_eventparticipated[i],
-            "Event Position": list_of_eventposition[i],
-            "Event Start Date": list_of_eventstartdate[i],
-            "Event End Date": list_of_eventenddate[i]
-          };
-          studentprofileAPI.studenteventlist.data.push(current_event);
-        }
+
+
+
 
 
         api_res.json(studentprofileAPI);
@@ -819,7 +832,7 @@ app.get('/api/compare_absentees2events', (req, res) => {
 
 
 // Create a Server
-let server = app.listen(8080, function () {
+let server = app.listen(8002, function () {
 
   let host = server.address().address
   let port = server.address().port
