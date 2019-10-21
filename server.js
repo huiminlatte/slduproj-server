@@ -221,10 +221,16 @@ app.get("/api/uploadedfiles", function (req, res) {
     //console.log(errresponse); 
   } else {
     var query = "SHOW TABLES;";
-    executeQuery(query, res);
-    //setTimeout(errresponse = executeQuery(query, res));
-    //console.log("ERR RESPONSE")
-    //console.log(errresponse); 
+    connection.query(query, function (err, response) {
+      if (err) {
+        //return 
+        res.send(err);
+      } else {
+        let fileSet = new Set([...response]);
+        fileSet.forEach(file => { file.Tables_in_mydb === 'EVENTS' ? fileSet.delete(file) : null });
+        res.send([...fileSet]);
+      }
+    })
   }
 });
 
@@ -553,8 +559,8 @@ function importEventAttriData2MySQL(filePath) {
 
 app.get('/api/skillset', (req, api_res) => {
   var matricnumber = req.query.matricnumber;
-  // var given_studentname = req.query.studentname;
-  // var given_ntuemailaddress = req.query.ntuemailaddress;
+  var given_studentname = req.query.studentname;
+  var given_ntuemailaddress = req.query.ntuemailaddress;
 
 
   var list_of_eventparticipated = [];
@@ -658,7 +664,7 @@ async function fn2_getattributeskill() {
 }
 
 async function fn3_getstudentname(matricnumber) {
-  var query_studentname = "select studentname from STUDENT_MASTERLIST where matricnumber LIKE '" + matricnumber + "';";
+  var query_studentname = "select studentname, ntuemailaddress from STUDENT_MASTERLIST where matricnumber LIKE '" + matricnumber + "';";
 
   let promise = new Promise((resolve, reject) => {
     connection.query(query_studentname, (err, response) => {
